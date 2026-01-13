@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
+      # 1. Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -27,29 +27,29 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
-      # 4. Install Python dependencies explicitly (no requirements.txt needed)
+      # 4. Install Python dependencies from requirements.txt
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ./backend  # Install your local backend package
-          pip install fastapi pydantic pydantic-settings pytest ruff mypy
+          pip install -r backend/requirements.txt
+          pip install pytest ruff mypy
 
-      # 5. Set PYTHONPATH so local modules are found
+      # 5. Set PYTHONPATH to backend/src so Python finds local modules
       - name: Set PYTHONPATH
         run: |
-          echo "PYTHONPATH=$(pwd)/backend" >> $GITHUB_ENV
+          echo "PYTHONPATH=$(pwd)/backend/src" >> $GITHUB_ENV
 
-      # 6. Lint with Ruff (non-blocking warnings)
+      # 6. Lint with Ruff
       - name: Lint with Ruff
         run: |
-          ruff check . || true
+          ruff check backend/src || true
 
-      # 7. Type check with MyPy (ignore missing third-party stubs)
+      # 7. Type check with MyPy
       - name: Type check with MyPy
         run: |
-          mypy ./backend --ignore-missing-imports || true
+          mypy backend/src --ignore-missing-imports || true
 
-      # 8. Run tests (blocking step)
+      # 8. Run tests
       - name: Run tests
         run: |
-          pytest -v
+          pytest -v backend/tests
