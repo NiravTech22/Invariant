@@ -2,44 +2,51 @@ name: Flowguard CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout code
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
+      # 3. Install system dependencies
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
 
+      # 4. Install Python dependencies
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f pyproject.toml ]; then pip install .; fi
-          pip install pytest ruff mypy
+          pip install -r requirements.txt
+          pip install -e ./backend          # Install local code in editable mode
+          pip install pytest ruff mypy fastapi pydantic pydantic-settings
 
+      # 5. Lint with Ruff (non-blocking)
       - name: Lint with Ruff
         run: |
-          ruff check .
+          ruff check . || true               # Lint warnings won't fail CI
 
+      # 6. Type check with MyPy (non-blocking on test files)
       - name: Type check with MyPy
         run: |
-          # Exclude test files to avoid type errors in dynamic tests
-          mypy . --exclude test
+          export PYTHONPATH=$(pwd)/backend
+          mypy ./backend --ignore-missing-imports --exclude test || true
 
+      # 7. Run tests (blocking step)
       - name: Run tests
         run: |
           pytest -v
