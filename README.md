@@ -1,88 +1,60 @@
-# Flowguard
+# FlowGuard: Robotics Runtime Governance Layer
 
-**Flowguard** is a production-grade AI workflow orchestration and reliability platform designed to build, run, version, test, and monitor LLM-powered pipelines in production.
+**FlowGuard** is a production-grade runtime safety, validation, and governance layer for autonomous systems. It sits between the autonomy decision system (Planner/Policy) and the execution environment (Controller/Hardware), ensuring that all actions comply with physical constraints, safety policies, and system invariants.
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![License](https://img.shields.io/badge/license-Proprietary-red)
+![Status](https://img.shields.io/badge/status-active-success)
+![Safety](https://img.shields.io/badge/safety-fail--safe-blue)
 
-## 🏗️ System Architecture
+## Core Mission
 
-Flowguard operates on a layered architecture ensuring separation of concerns between client interfaces, control logic, execution, and data.
+To provide a **deterministic, traceable, and fail-safe** supervisory layer that allows researchers and engineers to deploy experimental autonomy models (LLMs, Neural Policies) without risking physical safety.
 
-- **Client Layer**: Next.js Dashboard & CLI for user interaction.
-- **Control Plane**: FastAPI services for managing workflow definitions and versions.
-- **Execution Plane**: Async engine for reliable task orchestration.
-- **AI Services**: Model-agnostic adapters for LLM interactions.
+## Architecture
 
-*(See `docs/system_architecture.md` for the full diagram)*
+FlowGuard operates as a strictly layered pipeline:
 
-## 🚀 Tech Stack
+1.  **Observability**: Ingests `SystemState` (pose, velocity, sensors).
+2.  **Safety Pipeline**: Runs a chain of `SafetyValidator` modules:
+    *   **Physical Constraints**: Max velocity, acceleration limits.
+    *   **Policies**: Geofencing, operational zones.
+    *   **Uncertainty**: Sensor health checks.
+3.  **Intervention**:
+    *   **Approve**: Pass-through valid actions.
+    *   **Modify**: Clamp/Smooth actions to safe bounds.
+    *   **Reject/E-Stop**: Block critical violations.
 
-- **Backend**: Python 3.11+, FastAPI, Pydantic, SQLAlchemy, AsyncIO.
-- **Frontend**: TypeScript, Next.js 14 (App Router), TailwindCSS, Shadcn/UI.
-- **Infrastructure**: Docker, PostgreSQL, Redis (planned).
-
-## 📂 Project Structure
+## Project Structure
 
 ```bash
-Flowguard/
-├── backend/            # FastAPI Application
-│   ├── src/
-│   │   ├── api/        # REST Endpoints
-│   │   ├── core/       # Config, Security, Logging
-│   │   ├── workflow/   # Orchestrator & Engine
-│   │   └── main.py     # Entrypoint
-│   └── tests/          # Pytest Suite
-├── frontend/           # Next.js Dashboard
-│   ├── src/
-│   │   ├── app/        # App Router Pages
-│   │   └── components/ # React Components
-│   └── package.json
-├── docs/               # Architecture & Design Docs
-└── docker-compose.yml  # Local Development Orchestration
+FlowGuard/
+├── flowguard/          # Core Safety Library
+│   ├── core/           # Interfaces & Types
+│   ├── validators/     # Safety Checks (Constraints/Policies)
+│   ├── intervention/   # Modification Logic
+│   └── telemetry/      # Logging & Explainability
+├── backend/            # Telemetry Aggregator (FastAPI)
+├── examples/           # Simulation Scripts & Demos
+└── tests/              # Regression & Unit Tests
 ```
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
+- Python 3.10+
+- (Optional) ROS2 for hardware integration
 
-- Python 3.11+
-- Node.js 18+
-- Docker & Docker Compose
+### Quick Start (Simulated)
 
-### Quick Start
+```bash
+# Install dependencies
+pip install pydantic
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/NiravTech22/Flowguard.git
-    cd Flowguard
-    ```
+# Run the demo loop
+python examples/simple_loop.py
+```
 
-2.  **Start the Backend**:
-    ```bash
-    cd backend
-    python -m venv .venv
-    .\.venv\Scripts\Activate
-    pip install -r requirements.txt
-    uvicorn src.main:app --reload
-    ```
+## Contribution
 
-3.  **Start the Frontend**:
-    ```bash
-    cd frontend
-    npm install
-    npm run dev
-    ```
-
-4.  **Visit the Dashboard**:
-    Open [http://localhost:3000](http://localhost:3000)
-
-## 🧪 Testing
-
-- **Backend**: `pytest`
-- **Frontend**: `npm run test` (configured later)
-
-## 🤝 Contribution
-
-Please verify all changes with `tools/verify_changes.sh` (planned) before pushing.
+Safety is paramount. All changes require:
+1.  Passing regression tests.
+2.  No degradation in decision latency.

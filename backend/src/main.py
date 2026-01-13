@@ -1,34 +1,41 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from src.core.config import settings
-from src.api import routes
+from typing import List
+from .schemas import TelemetryEvent, DecisionLog
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    description="Flowguard AI Workflow Orchestration Platform",
-)
+app = FastAPI(title="FlowGuard Telemetry Server")
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include Routes
-app.include_router(routes.api_router, prefix="/api/v1")
+# In-memory store for demo purposes
+event_log: List[TelemetryEvent] = []
+decisions: List[DecisionLog] = []
 
-@app.get("/")
-async def root():
+@app.post("/api/v1/telemetry/event")
+async def ingest_event(event: TelemetryEvent):
+    event_log.append(event)
+    return {"status": "received", "count": len(event_log)}
+
+@app.post("/api/v1/telemetry/decision")
+async def ingest_decision(decision: DecisionLog):
+    decisions.append(decision)
+    # in a real app, write to DB or TimescaleDB here
+    return {"status": "logged", "total_decisions": len(decisions)}
+
+@app.get("/api/v1/dashboard/summary")
+async def get_dashboard_summary():
     return {
-        "message": "Welcome to Flowguard Control Plane",
-        "docs": "/docs",
-        "version": settings.VERSION
+        "total_events": len(event_log),
+        "total_decisions": len(decisions),
+        "recent_decisions": decisions[-5:]
     }
 
 @app.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "flowguard-backend"}
+async def health():
+    return {"status": "online", "role": "telemetry-aggregator"}
