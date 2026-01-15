@@ -1,5 +1,9 @@
 # Invariant
 
+[![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![CUDA](https://img.shields.io/badge/CUDA-12.1-orange)](https://developer.nvidia.com/cuda-zone)
+
 ## Overview
 
 Invariant is a research-driven framework that applies principles from robotics control theory to the **design, execution, and validation of robotics software workflows**. Rather than learning robot actions or replacing planners and controllers, this system focuses on *governing* how robotics pipelines behave under uncertainty, timing constraints, and variation.
@@ -36,21 +40,11 @@ Machine learning is used here as a meta-level system intelligence, not as a repl
 
 ## The motivation for this project
 
-As a robotics engineering student, I find that modern robotics is often dominated by complex, multi-node software graphs 
+In modern robotics, validation is typically ad hoc, sequential, manual, and difficult to reproduce. It is often performed late in development, tightly coupled to specific hardware or simulator configurations, and driven by trial and error rather than formal reasoning. As robotics systems grow in scale, this style of validation provides little insight into system-level behavior and makes it difficult to understand how errors propagate across nodes, time, and feedback loops.
 
-* Complex, multi-node software graphs
-* Tight latency and jitter constraints
-* Partial observability and noisy data
-* Fragile assumptions embedded in glue code
+This project takes a different approach by treating the robotics workflow itself as a dynamic system. Rather than validating individual components in isolation, the entire software graph is modeled as an evolving system with state, inputs, outputs, and internal feedback. Timing, data flow, and execution order are treated as first-class signals, not side effects.
 
-Validation is typically:
-
-* Ad hoc
-* Sequential
-* Manual
-* Difficult to reproduce
-
-This project treats a robotics workflow itself as a *dynamic* system that can be analyzed, perturbed, replayed, and stabilized using control-theoretic ideas.
+By applying control-theoretic ideas such as observability, stability, perturbation response, and closed-loop analysis, workflows can be systematically analyzed, stressed, replayed, and stabilized in a controlled and reproducible environment. This enables validation to move from a one-off, hardware-dependent process to a repeatable exploration of a workflow’s operating envelope without requiring physical robots or simulators.
 
 ---
 
