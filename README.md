@@ -1,84 +1,42 @@
-# Invariant: A control-theoretic meta learning architecture for robotics Workflows
+# Invariant: A Control-Theoretic Meta-Learning Framework for Robotics Workflow Analysis
 
-[![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)  
 [![CUDA](https://img.shields.io/badge/CUDA-12.1-orange)](https://developer.nvidia.com/cuda-zone)
 
-## Overview
+## What This Is
 
-**Invariant** is a research-grade robotics software framework that applies control-theoretic principles to the governance and validation of robotics pipelines. Unlike traditional robot controllers or simulators, Invariant acts as a supervisory layer that treats the software workflow itself as a dynamic system.
+Invariant is a research framework for analyzing the stability, correctness, and failure modes of robotics software workflows as systems, not as isolated components.
 
-It is designed to be deterministic, reproducible, and explainable, providing robotics engineers with a powerful tool to analyze timing drift, integration errors, and system stability under perturbation.
+Most robotics stacks fail between modules, at the integration, timing, and orchestration layer. Invariant treats the entire workflow as a dynamic system, instruments it, perturbs it deterministically, and measures how it behaves under stress.
 
----
+It does not control hardware, plan trajectories, or simulate physics. It exists specifically to answer one question:
 
-## Philosophy & Core Principles
+> Is this robotics software stack actually stable when it runs as a system?
 
-Robotics systems often fail at the integration layer. Invariant addresses this by implementing a closed-loop validation structure:
+## Why This Exists
 
-1.  **Workflow Definition**: Declarative graph representation of the robotics pipeline.
-2.  **Execution Engine**: Strictly deterministic execution with seeded fault injection.
-3.  **Validation Layer**: Composable passes for structural, temporal, and behavioral analysis.
-4.  **ML Supervisor**: Supervisory observer that predicts instability and failure risk.
+Robotics research has plenty of excellent tools for perception, planning, and control. What is missing is a rigorous way to evaluate how these modules behave when connected in a full pipeline. Integration bugs, timing drift, and cascading failures often appear late in development or only during real hardware runs. Detecting them early is hard and often ad hoc.
 
-### Non-Goals (Must Not Implement)
-- **No Physical Control**: Does not control motors or hardware.
-- **No Planning**: Does not compute trajectories or paths.
-- **No Perception**: Does not implement CV or sensor fusion models.
-- **No Simulation**: Does not simulate physics (uses logical timing instead).
+Invariant was designed to fill this gap. By representing workflows as explicit graphs and executing them deterministically, it allows systematic measurement of stability, divergence, and failure sensitivity. This lets you identify weaknesses, test recovery strategies, and collect data that can inform future designs. It’s not just about catching errors; it’s about understanding the behavior of the entire system and creating workflows that are robust, predictable, and research-ready.
 
----
+Using Invariant, you can run repeatable experiments that are suitable for publications, internal validation, or building more reliable robotics software. It makes the invisible software-level dynamics visible.
+
+## Design Philosophy
+
+Invariant is intentionally focused. Every feature it does not implement is a deliberate choice. The goal is to isolate software-level behavior so that the results are clear and actionable.
+
+It does not control motors, compute trajectories, or run perception models. It does not simulate physics. By removing these layers, we can focus on the timing, structure, and logical behavior of the workflow itself. This makes it possible to study fault propagation, stability, and divergence without interference from hardware noise or model inaccuracies.
+
+This approach is minimal but powerful. It treats workflows as systems to be measured and understood, rather than just code to be executed. Every decision in Invariant is meant to give researchers and engineers confidence that the metrics and insights it produces reflect the true dynamics of their software.
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[Workflow Definition] --> B[Execution Engine]
+    A[Workflow Definition] --> B[Deterministic Execution Engine]
     B --> C[Validation Layer]
-    C --> D[Signals & Metrics]
+    C --> D[Signals & Metrics Extraction]
     D --> E[ML Supervisor]
-    E --> F[Stability Assessment]
+    E --> F[Stability Assessment & Feedback]
     F --> B
-```
-
----
-
-## Getting Started
-
-### Installation
-
-```bash
-pip install -e .
-```
-
-### Usage
-
-Run the validation pipeline on a workflow:
-
-```bash
-invariant validate examples/simple_workflow.yaml --runs 10 --latency-max 50.0
-```
-
-This will:
-1. Load the workflow DAG.
-2. Execute it 10 times with deterministic seeded perturbations.
-3. Perform structural, temporal (latency budget), and behavioral (divergence) validation.
-4. Compute a stability score.
-5. Generate a `stability_report.md`.
-
----
-
-## Project Structure
-
-- `invariant/workflow/`: Declarative node and graph abstractions.
-- `invariant/execution/`: Deterministic engine and perturbation logic.
-- `invariant/validation/`: Stability and divergence validators.
-- `invariant/ml/`: Predictive supervisor and feature extraction.
-- `invariant/ros/`: Passive ROS 2 introspection bridge.
-- `invariant/reporting/`: Human and machine-readable reports.
-
----
-
-## License
-
-MIT License. See `LICENSE` for details.
