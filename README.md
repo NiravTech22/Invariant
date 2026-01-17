@@ -49,4 +49,6 @@ graph TD
 
 ```
 
+## Reference(s)
+
 H. Araujo, M. R. Mousavi, and M. Varshosaz, "Testing, Validation, and Verification of Robotic and Autonomous Systems: A Systematic Review," *ACM Transactions on Software Engineering and Methodology*, vol. 32, no. 2, pp. 51:1–51:61, 2023. [DOI: 10.1145/3542945](https://doi.org/10.1145/3542945)
