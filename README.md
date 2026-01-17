@@ -28,11 +28,11 @@ Using Invariant, you can run repeatable experiments that are suitable for public
 
 ## Design Philosophy
 
-Invariant is intentionally focused. Every feature it does not implement is a deliberate choice. The goal is to isolate software‑level behavior so that the results are clear and actionable.
+Invariant is intentionally focused. Every feature it does not implement is a deliberate choice. The goal is to isolate software-level behavior so that the results are clear and actionable.
 
 It does not control motors, compute trajectories, or run perception models. It does not simulate physics. By removing these layers, we can focus on the timing, structure, and logical behavior of the workflow itself. This makes it possible to study fault propagation, stability, and divergence without interference from hardware noise or model inaccuracies.
 
-The systematic review in the literature shows that while many robotic testing techniques exist, **only a minority attempt to characterize efficiency or adequacy in a generalizable way**, and even fewer demonstrate tools that scale across systems and domains. :contentReference[oaicite:2]{index=2}
+The systematic review in the literature shows that while many robotic testing techniques exist, **only a minority attempt to characterize efficiency or adequacy in a generalizable way**, and even fewer demonstrate tools that scale across systems and domains (Araujo et al., 2023).
 
 This approach is minimal but powerful. It treats workflows as systems to be measured and understood, rather than just code to be executed. Every decision in Invariant is meant to give researchers and engineers confidence that the metrics and insights it produces reflect the true dynamics of their software.
 
@@ -48,13 +48,5 @@ graph TD
     F --> B
 
 ```
-@article{Araujo2023Testing,
-  title={Testing, Validation, and Verification of Robotic and Autonomous Systems: A Systematic Review},
-  author={H. Araujo and M. R. Mousavi and M. Varshosaz},
-  journal={ACM Transactions on Software Engineering and Methodology},
-  volume={32},
-  number={2},
-  pages={51:1--51:61},
-  year={2023},
-  doi={10.1145/3542945}
-}
+
+H. Araujo, M. R. Mousavi, and M. Varshosaz, "Testing, Validation, and Verification of Robotic and Autonomous Systems: A Systematic Review," *ACM Transactions on Software Engineering and Methodology*, vol. 32, no. 2, pp. 51:1–51:61, 2023. [DOI: 10.1145/3542945](https://doi.org/10.1145/3542945)
