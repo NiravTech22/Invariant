@@ -16,15 +16,11 @@ It does not control hardware, plan trajectories, or simulate physics. It exists 
 
 ## Why This Exists
 
-Robotics research has plenty of excellent tools for perception, planning, and control. What is missing is a rigorous way to evaluate how these modules behave when connected in a full pipeline. Integration bugs, timing drift, and cascading failures often appear late in development or only during real hardware runs. Detecting them early is hard and often ad hoc.
+Robotics research has plenty of excellent tools for perception, planning, and control. What is missing is a rigorous way to evaluate how these modules behave when connected in a full pipeline. Integration bugs, timing drift, and cascading failures often appear late in development or only during real hardware runs. Detecting them early is hard and often ad hoc. 
 
-Existing literature confirms that research on robotic and autonomous systems (RAS) is wide‑ranging, but there is **limited systematic evidence of rigorous, domain‑agnostic validation techniques that work across software workflows**. A recent systematic review of testing, validation, and verification in RAS found that even though thousands of studies were screened, *very few provide rigorous performance or adequacy measures*, and most still rely on domain‑specific tools rather than general frameworks for software‑level evaluation. :contentReference[oaicite:0]{index=0}
+Invariant was designed to fill this gap. By representing workflows as explicit graphs and executing them deterministically, it allows systematic measurement of stability, divergence, and failure sensitivity. This lets you identify weaknesses, test recovery strategies, and collect data that can inform future designs. It’s not only about catching errors, but also about understanding why the behavior of the entire system and creating workflows that are robust, predictable, and research-ready, is so significant in modern robotics.
 
-The review also highlights that a broad set of modeling techniques (e.g., temporal logic, state machines, epistemic models) are used to describe requirements and behavior in robotics systems, but there is a gap in **widely accepted, rigorous performance and adequacy metrics** for these models—especially for workflows that involve timing, correctness, and compositional guarantees. :contentReference[oaicite:1]{index=1}
-
-Invariant was designed to fill this gap. By representing workflows as explicit graphs and executing them deterministically, it allows systematic measurement of stability, divergence, and failure sensitivity. This lets you identify weaknesses, test recovery strategies, and collect data that can inform future designs. It’s not just about catching errors; it’s about understanding the behavior of the entire system and creating workflows that are robust, predictable, and research‑ready.
-
-Using Invariant, you can run repeatable experiments that are suitable for publications, internal validation, or building more reliable robotics software. It makes the invisible software‑level dynamics visible.
+Using the Invariant framework, you can run repeatable experiments that are suitable for publications, internal validation, or building more reliable robotics software. It makes the invisible software-level dynamics visible.
 
 ## Design Philosophy
 
