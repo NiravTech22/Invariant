@@ -3,6 +3,8 @@ import os
 import yaml
 from .workflow.loader import WorkflowLoader
 from .execution.engine import DeterministicEngine, PerturbationModel
+from .execution.ros_runner import ROSEngine
+from .ros.bridge import ActiveBridge
 from .core.config import ExperimentConfig
 from .validation.structural import StructuralValidator
 from .validation.temporal import TemporalValidator
@@ -58,6 +60,32 @@ def validate(workflow_path, runs, seed, latency_max):
         f.write(md_report)
         
     click.echo(f"Report generated: {report_path}")
+
+@main.command()
+@click.option('--duration', default=10.0, help='Monitoring duration in seconds')
+@click.option('--run-id', default='ros_run_1', help='Identifier for this run')
+def monitor(duration, run_id):
+    """Monitor a running ROS 2 system."""
+    click.echo("Connecting to ROS 2 system...")
+    bridge = ActiveBridge()
+    
+    if not bridge.active:
+        click.echo("Error: Could not connect to ROS 2 (rclpy not found or init failed).")
+        return
+
+    click.echo("Introspecting graph...")
+    graph = bridge.introspect_graph()
+    click.echo(f"Found {len(graph.node_ids)} nodes.")
+    
+    monitor_config = ExperimentConfig({"run_id": run_id})
+    runner = ROSEngine(bridge, monitor_config)
+    
+    click.echo(f"Monitoring for {duration} seconds...")
+    trace = runner.monitor(duration)
+    
+    click.echo(f"Captured {len(trace.signals)} execution signals.")
+    
+    bridge.shutdown()
 
 if __name__ == "__main__":
     main()
