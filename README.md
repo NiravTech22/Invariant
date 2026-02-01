@@ -1,9 +1,5 @@
 # Invariant
 
-[![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)  
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)  
-[![CUDA](https://img.shields.io/badge/CUDA-12.1-orange)](https://developer.nvidia.com/cuda-zone)
-
 ## What This Is
 
 Invariant is a research framework for analyzing the stability, correctness, and failure modes of robotics software workflows as systems, not as isolated components.
