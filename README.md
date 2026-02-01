@@ -1,4 +1,4 @@
-# Invariant: A Control-Theoretic Meta-Learning Framework for Robotics Workflow Analysis
+# Invariant
 
 [![Python Version](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)  
