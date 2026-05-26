@@ -1,0 +1,47 @@
+suite_name: latency_sensitivity_sweep
+
+experiments:
+  - name: latency_10ms
+    workflow_path: examples/simple_pipeline.yaml
+    num_perturbed_runs: 10
+    seed: 42
+    output_dir: experiments/output
+    divergence_threshold: 0.1
+    description: Latency sweep at 10ms fixed delay on planner
+    perturbations:
+      - type: LatencyPerturbation
+        node_ids: [planner]
+        params:
+          mode: fixed
+          delay_ms: 10.0
+        seed: 42
+
+  - name: latency_50ms
+    workflow_path: examples/simple_pipeline.yaml
+    num_perturbed_runs: 10
+    seed: 42
+    output_dir: experiments/output
+    divergence_threshold: 0.1
+    description: Latency sweep at 50ms fixed delay on planner
+    perturbations:
+      - type: LatencyPerturbation
+        node_ids: [planner]
+        params:
+          mode: fixed
+          delay_ms: 50.0
+        seed: 42
+
+  - name: latency_200ms
+    workflow_path: examples/simple_pipeline.yaml
+    num_perturbed_runs: 10
+    seed: 42
+    output_dir: experiments/output
+    divergence_threshold: 0.1
+    description: Latency sweep at 200ms fixed delay on planner
+    perturbations:
+      - type: LatencyPerturbation
+        node_ids: [planner]
+        params:
+          mode: fixed
+          delay_ms: 200.0
+        seed: 42

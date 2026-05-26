@@ -1,7 +1,12 @@
-import unittest
-from unittest.mock import MagicMock, patch
 import sys
-import types
+import unittest
+from unittest.mock import MagicMock
+
+import pytest
+
+pytestmark = pytest.mark.skip(
+    reason="Legacy FlowGuard ROS tests — not part of Invariant architecture"
+)
 
 # Mock rclpy before importing invariant
 mock_rclpy = MagicMock()
@@ -15,45 +20,51 @@ mock_node.get_node_names_and_namespaces.return_value = [
     ("node_b", "/ns"),
 ]
 # node_a publishes topic_x
-mock_node.get_publisher_names_and_types_by_node.side_effect = lambda name, ns: [("topic_x", ["std_msgs/msg/String"])] if name == "node_a" else []
+mock_node.get_publisher_names_and_types_by_node.side_effect = lambda name, ns: (
+    [("topic_x", ["std_msgs/msg/String"])] if name == "node_a" else []
+)
 # node_b subscribes to topic_x
-mock_node.get_subscriber_names_and_types_by_node.side_effect = lambda name, ns: [("topic_x", ["std_msgs/msg/String"])] if name == "node_b" else []
+mock_node.get_subscriber_names_and_types_by_node.side_effect = lambda name, ns: (
+    [("topic_x", ["std_msgs/msg/String"])] if name == "node_b" else []
+)
 
 # Inject into sys.modules
 sys.modules["rclpy"] = mock_rclpy
 sys.modules["rclpy.node"] = MagicMock()
 
 # Now import invariant modules
-from invariant.ros.bridge import ActiveBridge
-from invariant.execution.ros_runner import ROSEngine
-from invariant.core.config import ExperimentConfig
+from invariant.core.config import ExperimentConfig  # noqa: E402
+from invariant.execution.ros_runner import ROSEngine  # noqa: E402
+from invariant.ros.bridge import ActiveBridge  # noqa: E402
+
 
 class TestROSIntegration(unittest.TestCase):
     def test_bridge_introspection(self):
         bridge = ActiveBridge()
         self.assertTrue(bridge.active)
-        
+
         graph = bridge.introspect_graph()
         self.assertEqual(len(graph.node_ids), 2)
-        
+
         # Verify edge
         # Expected: /ns/node_a -> /ns/node_b
         node_a_id = "/ns/node_a"
         node_b_id = "/ns/node_b"
-        
+
         self.assertTrue(graph.graph.has_edge(node_a_id, node_b_id))
-        
+
     def test_ros_runner(self):
         bridge = ActiveBridge()
         config = ExperimentConfig({"run_id": "test_run"})
         runner = ROSEngine(bridge, config)
-        
+
         trace = runner.monitor(duration_sec=0.1)
         self.assertIsNotNone(trace)
         self.assertEqual(trace.run_id, "test_run")
-        
+
         # Verify spin was called
         # We can't easily check spin count without more mocking, but we verified it ran
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()

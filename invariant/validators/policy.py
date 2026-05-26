@@ -1,7 +1,8 @@
-from typing import Optional
+
 from ..core.interfaces import SafetyValidator
-from ..core.types import SystemState, ProposedAction
 from ..core.outcome import Violation
+from ..core.types import ProposedAction, SystemState
+
 
 class GeofenceValidator(SafetyValidator):
     def __init__(self, x_limit: float = 10.0, y_limit: float = 10.0):
@@ -12,10 +13,10 @@ class GeofenceValidator(SafetyValidator):
     def name(self) -> str:
         return "GeofencePolicy"
 
-    def check(self, state: SystemState, action: ProposedAction) -> Optional[Violation]:
+    def check(self, state: SystemState, action: ProposedAction) -> Violation | None:
         # Simple check: If robot is OUTSIDE bounds, block any motion that moves FURTHER away
         # For simplicity in this demo, we just fault if specific zones are entered or if state says we are OOB
-        
+
         x = state.pose.get("x", 0.0)
         y = state.pose.get("y", 0.0)
 
@@ -26,5 +27,5 @@ class GeofenceValidator(SafetyValidator):
                 severity="critical",
                 context={"pose": state.pose, "limits": [self.x_limit, self.y_limit]}
             )
-            
+
         return None

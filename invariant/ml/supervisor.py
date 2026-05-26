@@ -1,7 +1,9 @@
+from typing import Any
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from typing import Dict, List, Any, Optional
+
 
 class FailurePredictionMLP(nn.Module):
     def __init__(self, input_dim: int, hidden_dim: int = 16):
@@ -20,7 +22,7 @@ class FailurePredictionMLP(nn.Module):
 
 class MLPSupervisor:
     """model for failure prediction"""
-    
+
     def __init__(self, input_dim: int):
         self.model = FailurePredictionMLP(input_dim)
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)

@@ -1,14 +1,14 @@
 import time
-from typing import List
-from .types import SystemState, ProposedAction, SafetyMode
-from .outcome import SafetyOutcome, Decision
-from .interfaces import SafetyValidator
 
-from ..telemetry.client import TelemetryBridge, ConsoleTelemetryBridge
+from ..telemetry.client import ConsoleTelemetryBridge, TelemetryBridge
+from .interfaces import SafetyValidator
+from .outcome import Decision, SafetyOutcome
+from .types import ProposedAction, SafetyMode, SystemState
+
 
 class SafetySupervisor:
     def __init__(self, telemetry_bridge: TelemetryBridge = None):
-        self.validators: List[SafetyValidator] = []
+        self.validators: list[SafetyValidator] = []
         self.mode = SafetyMode.NORMAL
         self.telemetry = telemetry_bridge or ConsoleTelemetryBridge()
 
@@ -28,7 +28,7 @@ class SafetySupervisor:
         # 2. Determine Decision
         decision = Decision.APPROVED
         reason = "Safe"
-        
+
         if violations:
             # 3. Attempt Intervention (Clamping)
             if action.type == "velocity_cmd" and all(v.rule_id.startswith("PHYS") for v in violations):
@@ -36,7 +36,7 @@ class SafetySupervisor:
                 # In a real system, we'd iterate through specialized Modifiers
                 # Here we just hardcode a 'safe' clamp for the demo
                 modified_payload = action.payload.copy()
-                
+
                 # Check for specific violations
                 for v in violations:
                      if "exceeds limit" in v.description:
@@ -61,7 +61,7 @@ class SafetySupervisor:
                     reason=reason,
                     processing_time_ms=(time.time() - start_time) * 1000
                 )
-            
+
             # Default to REJECT if we can't safely modify
             decision = Decision.REJECTED
             reason = f"Blocked by {len(violations)} checks"
@@ -72,8 +72,8 @@ class SafetySupervisor:
             reason=reason,
             processing_time_ms=(time.time() - start_time) * 1000
         )
-        
+
         # Log to telemetry
         self.telemetry.log_decision(state, action, result)
-        
+
         return result
