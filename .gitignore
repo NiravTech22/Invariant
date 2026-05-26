@@ -22,3 +22,11 @@ Thumbs.db
 
 # Flowguard
 *.log
+
+# Coverage and packaging artifacts
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+*.egg
+.eggs/
