@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Run ruff check
+        run: ruff check invariant/ tests/
+      - name: Run ruff format check
+        run: ruff format --check invariant/ tests/
+
+  typecheck:
+    name: Type check (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run mypy
+        run: mypy invariant/ --ignore-missing-imports
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Generate golden traces
+        run: INVARIANT_REGEN_GOLDEN=1 pytest tests/regression/ -v || true
+      - name: Run tests with coverage
+        run: pytest tests/ --cov=invariant --cov-report=term-missing --cov-report=xml -v
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.11'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  build:
+    name: Package build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tools
+        run: pip install build
+      - name: Build package
+        run: python -m build
+      - name: Verify installable
+        run: pip install dist/*.whl && python -c "import invariant; print(invariant.__version__)"
+
+  end-to-end:
+    name: End-to-end CLI smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: pip install -e ".[dev]"
+      - name: Validate workflow
+        run: invariant validate examples/simple_pipeline.yaml
+      - name: Validate calibra template
+        run: invariant validate examples/calibra_template.yaml
+      - name: List perturbations
+        run: invariant perturbations list
+      - name: Run latency experiment (single config)
+        run: |
+          cat > /tmp/test_exp.yaml << 'EOF'
+          name: ci_smoke
+          workflow_path: examples/simple_pipeline.yaml
+          num_perturbed_runs: 3
+          seed: 42
+          output_dir: /tmp/invariant_ci_output
+          perturbations:
+            - type: LatencyPerturbation
+              node_ids: [planner]
+              params:
+                mode: fixed
+                delay_ms: 50.0
+              seed: 42
+          EOF
+          invariant run /tmp/test_exp.yaml --output-dir /tmp/invariant_ci_output

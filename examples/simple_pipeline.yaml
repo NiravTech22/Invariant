@@ -1,0 +1,50 @@
+metadata:
+  name: simple_pipeline
+  version: "1.0.0"
+  description: Three-node linear pipeline for basic validation
+  author: Invariant Contributors
+  target_system: mock
+
+nodes:
+  - id: perception
+    type: perception
+    latency_bounds:
+      min_ms: 1.0
+      max_ms: 33.0
+    metadata:
+      description: Simulated camera/lidar perception module
+
+  - id: planner
+    type: planning
+    latency_bounds:
+      min_ms: 5.0
+      max_ms: 100.0
+    metadata:
+      description: Path planning module
+
+  - id: controller
+    type: control
+    latency_bounds:
+      min_ms: 0.5
+      max_ms: 10.0
+    metadata:
+      description: Velocity controller
+
+edges:
+  - source: perception
+    target: planner
+    data_type: point_cloud
+    latency:
+      nominal_ms: 0.5
+      jitter_ms: 0.1
+    reliability:
+      drop_probability: 0.0
+
+  - source: planner
+    target: controller
+    data_type: trajectory
+    latency:
+      nominal_ms: 0.2
+      jitter_ms: 0.05
+    reliability:
+      drop_probability: 0.0

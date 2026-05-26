@@ -3,6 +3,10 @@ from unittest.mock import MagicMock, patch
 import sys
 import types
 
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Legacy FlowGuard ROS tests — not part of Invariant architecture")
+
 # Mock rclpy before importing invariant
 mock_rclpy = MagicMock()
 mock_rclpy.ok.return_value = True

@@ -1,0 +1,64 @@
+metadata:
+  name: branching_pipeline
+  version: "1.0.0"
+  description: Parallel planning branches with arbitration
+  author: Invariant Contributors
+  target_system: mock
+
+nodes:
+  - id: perception
+    type: perception
+    latency_bounds:
+      min_ms: 1.0
+      max_ms: 33.0
+
+  - id: planner_a
+    type: planning
+    latency_bounds:
+      min_ms: 5.0
+      max_ms: 80.0
+    metadata:
+      description: Primary planner (global path)
+
+  - id: planner_b
+    type: planning
+    latency_bounds:
+      min_ms: 2.0
+      max_ms: 40.0
+    metadata:
+      description: Reactive planner (local obstacle avoidance)
+
+  - id: arbitrator
+    type: orchestrator
+    latency_bounds:
+      min_ms: 0.5
+      max_ms: 5.0
+    metadata:
+      description: Selects between planner outputs
+
+  - id: controller
+    type: control
+    latency_bounds:
+      min_ms: 0.5
+      max_ms: 10.0
+
+edges:
+  - source: perception
+    target: planner_a
+    data_type: point_cloud
+
+  - source: perception
+    target: planner_b
+    data_type: point_cloud
+
+  - source: planner_a
+    target: arbitrator
+    data_type: global_path
+
+  - source: planner_b
+    target: arbitrator
+    data_type: local_path
+
+  - source: arbitrator
+    target: controller
+    data_type: selected_trajectory

@@ -3,25 +3,122 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "invariant"
-version = "0.1.0"
-description = "Control-Theoretic ML for Robotics Workflows"
+name = "invariant-robotics"
+version = "0.2.0"
+description = "Research framework for analyzing stability, correctness, and failure modes of robotics software workflows"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "MIT"}
+authors = [
+    {name = "Invariant Contributors"}
+]
+keywords = ["robotics", "workflow", "stability", "testing", "research"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
 dependencies = [
     "networkx>=3.0",
     "pyyaml>=6.0",
-    "numpy>=1.20.0",
-    "torch>=2.0.0",
+    "numpy>=1.24.0",
     "pydantic>=2.0.0",
     "click>=8.0.0",
-    "matplotlib>=3.5.0",
+]
+
+[project.optional-dependencies]
+ros2 = [
+    # rclpy must be installed from the ROS 2 distribution; not pip-installable
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.23.0",
 ]
 
 [project.scripts]
-invariant = "invariant.cli:main"
+invariant = "invariant.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/NiravTech22/Invariant"
+Repository = "https://github.com/NiravTech22/Invariant"
+Issues = "https://github.com/NiravTech22/Invariant/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["invariant*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow",
+    "ros2: marks tests that require a ROS 2 environment",
+]
+
+[tool.coverage.run]
+source = ["invariant"]
+omit = [
+    # Legacy FlowGuard files (retained in repo for audit, not part of new architecture)
+    "invariant/core/engine.py",
+    "invariant/core/interfaces.py",
+    "invariant/core/outcome.py",
+    "invariant/core/types.py",
+    "invariant/execution/engine.py",
+    "invariant/execution/perturbation.py",
+    "invariant/execution/ros_runner.py",
+    "invariant/execution/signals.py",
+    "invariant/ros/*",
+    "invariant/workflow/*",
+    "invariant/validators/*",
+    "invariant/telemetry/*",
+    "invariant/ml/*",
+    "invariant/reporting/*",
+    # External-dependency-only modules (rclpy required)
+    "invariant/adapters/ros2.py",
+    "invariant/adapters/custom.py",
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A"]
+ignore = [
+    "A002",   # argument shadows builtin (json/format)
+    "A003",   # class attribute shadows builtin
+    "B008",   # do not perform function calls in default arguments
+    "N805",   # first argument of method should be named self (false positive with pydantic)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["invariant"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
+disallow_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true

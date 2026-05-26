@@ -1,0 +1,78 @@
+metadata:
+  name: calibra_template
+  version: "1.0.0"
+  description: Template workflow for a 6-DOF arm stack
+  author: Invariant Contributors
+  target_system: calibra_6dof_arm
+
+nodes:
+  - id: perception
+    type: perception
+    latency_bounds:
+      min_ms: 1.0
+      max_ms: 30.0
+    metadata:
+      description: RGB-D point cloud processing and object detection
+
+  - id: kinematics
+    type: planning
+    latency_bounds:
+      min_ms: 0.5
+      max_ms: 5.0
+    metadata:
+      description: Forward/inverse kinematics solver
+
+  - id: trajectory
+    type: planning
+    latency_bounds:
+      min_ms: 5.0
+      max_ms: 50.0
+    metadata:
+      description: Trajectory planner (MoveIt or custom)
+
+  - id: controller
+    type: control
+    latency_bounds:
+      min_ms: 0.5
+      max_ms: 2.0
+    metadata:
+      description: Joint position/velocity controller
+
+  - id: safety_monitor
+    type: safety
+    latency_bounds:
+      min_ms: 0.1
+      max_ms: 1.0
+    metadata:
+      description: Workspace limit and collision proximity monitor
+
+edges:
+  - source: perception
+    target: kinematics
+    data_type: object_pose
+    latency:
+      nominal_ms: 0.5
+
+  - source: kinematics
+    target: trajectory
+    data_type: joint_angles
+    latency:
+      nominal_ms: 0.2
+
+  - source: trajectory
+    target: controller
+    data_type: joint_trajectory
+    latency:
+      nominal_ms: 0.2
+
+  - source: perception
+    target: safety_monitor
+    data_type: point_cloud
+    latency:
+      nominal_ms: 0.5
+
+  - source: safety_monitor
+    target: controller
+    data_type: safety_envelope
+    latency:
+      nominal_ms: 0.1
