@@ -1,12 +1,12 @@
 """Unit tests for invariant.core: node, edge, graph, workflow."""
 
 import pytest
+from pydantic import ValidationError
 
-from invariant.core.edge import Edge, LatencyModel, ReliabilityModel
+from invariant.core.edge import Edge, ReliabilityModel
 from invariant.core.graph import WorkflowGraph
 from invariant.core.node import HealthState, LatencyBounds, Node, NodeType
 from invariant.core.workflow import Workflow, WorkflowMetadata
-
 
 # ------------------------------------------------------------------
 # Node tests
@@ -20,11 +20,11 @@ class TestNode:
         assert node.node_type == NodeType.PERCEPTION
 
     def test_empty_id_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             Node(node_id="")
 
     def test_latency_bounds_validation(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             LatencyBounds(min_ms=50.0, max_ms=10.0)
 
     def test_execute_passthrough_without_fn(self):
@@ -57,7 +57,7 @@ class TestEdge:
         assert edge.edge_id == "a->b"
 
     def test_self_loop_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             Edge(source_id="a", target_id="a")
 
     def test_latency_model_defaults(self):

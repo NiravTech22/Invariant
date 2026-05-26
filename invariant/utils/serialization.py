@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -55,7 +55,7 @@ def load_json(path: str | Path) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
     with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+        return cast(dict[str, Any], json.load(fh))
 
 
 def save_json(data: dict[str, Any], path: str | Path, indent: int = 2) -> None:

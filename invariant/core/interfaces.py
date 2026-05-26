@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
-from .types import SystemState, ProposedAction
+
 from .outcome import Violation
+from .types import ProposedAction, SystemState
+
 
 class SafetyValidator(ABC):
     """
     Interface for any safety check module (Constraint or Policy).
     """
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -15,7 +16,7 @@ class SafetyValidator(ABC):
         pass
 
     @abstractmethod
-    def check(self, state: SystemState, action: ProposedAction) -> Optional[Violation]:
+    def check(self, state: SystemState, action: ProposedAction) -> Violation | None:
         """
         Returns None if safe, or a Violation object if unsafe.
         Does NOT modify the action.

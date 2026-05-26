@@ -9,9 +9,7 @@ from invariant.adapters.mock import (
     MockPerceptionNode,
     MockPlannerNode,
 )
-from invariant.analysis.divergence import DivergenceAnalyzer
 from invariant.analysis.fault import FaultPropagationAnalyzer
-from invariant.analysis.stability import StabilityAnalyzer
 from invariant.execution.executor import DeterministicExecutor
 from invariant.perturbation.latency import LatencyMode, LatencyPerturbation
 
@@ -69,12 +67,9 @@ class TestBranchingPipelineBaseline:
 class TestBranchingPipelineFaultPropagation:
     def test_fault_in_planner_a_propagates(self, branching_workflow):
         baseline = DeterministicExecutor(branching_workflow).run()
-        pert = LatencyPerturbation(
-            node_ids={"planner_a"}, mode=LatencyMode.FIXED, delay_ms=200.0
-        )
+        pert = LatencyPerturbation(node_ids={"planner_a"}, mode=LatencyMode.FIXED, delay_ms=200.0)
         perturbed = [
-            DeterministicExecutor(branching_workflow, [pert]).run(timestep=i)
-            for i in range(5)
+            DeterministicExecutor(branching_workflow, [pert]).run(timestep=i) for i in range(5)
         ]
         fp = FaultPropagationAnalyzer(
             branching_workflow.graph, baseline, perturbed, "planner_a", divergence_threshold=0.01

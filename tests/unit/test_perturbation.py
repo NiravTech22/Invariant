@@ -2,18 +2,17 @@
 
 import pytest
 
-from invariant.core.node import LatencyBounds, Node, NodeType
 from invariant.core.edge import Edge
 from invariant.core.graph import WorkflowGraph
+from invariant.core.node import LatencyBounds, Node
 from invariant.core.workflow import Workflow, WorkflowMetadata
 from invariant.execution.clock import SimulatedClock
 from invariant.execution.context import ExecutionContext
 from invariant.execution.executor import DeterministicExecutor
-from invariant.perturbation.base import BasePerturbation
-from invariant.perturbation.cascade import CascadePerturbation, CascadeMode
-from invariant.perturbation.dropout import DropoutPerturbation, DropoutMode
+from invariant.perturbation.cascade import CascadeMode, CascadePerturbation
+from invariant.perturbation.dropout import DropoutMode, DropoutPerturbation
 from invariant.perturbation.latency import LatencyMode, LatencyPerturbation
-from invariant.perturbation.noise import NoisePerturbation, NoiseDistribution
+from invariant.perturbation.noise import NoiseDistribution, NoisePerturbation
 from invariant.perturbation.overload import OverloadPerturbation
 
 
@@ -25,11 +24,13 @@ def _make_ctx(timestep: int = 0) -> ExecutionContext:
 def _simple_workflow() -> Workflow:
     graph = WorkflowGraph()
     for nid in ["perception", "planner", "controller"]:
-        graph.add_node(Node(
-            node_id=nid,
-            latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
-            exec_fn=lambda inputs: {"val": 1.0},
-        ))
+        graph.add_node(
+            Node(
+                node_id=nid,
+                latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
+                exec_fn=lambda inputs: {"val": 1.0},
+            )
+        )
     graph.add_edge(Edge(source_id="perception", target_id="planner"))
     graph.add_edge(Edge(source_id="planner", target_id="controller"))
     return Workflow(graph=graph, metadata=WorkflowMetadata(name="test"))
@@ -55,18 +56,14 @@ class TestLatencyPerturbation:
         assert ctx.clock.now() == 0.0
 
     def test_uniform_delay_bounded(self):
-        pert = LatencyPerturbation(
-            mode=LatencyMode.UNIFORM, min_ms=10.0, max_ms=20.0, seed=99
-        )
+        pert = LatencyPerturbation(mode=LatencyMode.UNIFORM, min_ms=10.0, max_ms=20.0, seed=99)
         for _ in range(50):
             ctx = _make_ctx()
             pert.apply(ctx, "node")
             assert 10.0 <= ctx.clock.now() <= 20.0
 
     def test_gaussian_delay_non_negative(self):
-        pert = LatencyPerturbation(
-            mode=LatencyMode.GAUSSIAN, max_ms=10.0, std_ms=2.0, seed=42
-        )
+        pert = LatencyPerturbation(mode=LatencyMode.GAUSSIAN, max_ms=10.0, std_ms=2.0, seed=42)
         for _ in range(50):
             ctx = _make_ctx()
             pert.apply(ctx, "node")
@@ -82,9 +79,7 @@ class TestLatencyPerturbation:
         assert pert.applies_to("controller", 0) is False
 
     def test_start_end_step_gating(self):
-        pert = LatencyPerturbation(
-            mode=LatencyMode.FIXED, delay_ms=10.0, start_step=2, end_step=4
-        )
+        pert = LatencyPerturbation(mode=LatencyMode.FIXED, delay_ms=10.0, start_step=2, end_step=4)
         assert pert.applies_to("n", 1) is False
         assert pert.applies_to("n", 2) is True
         assert pert.applies_to("n", 4) is True
@@ -125,9 +120,7 @@ class TestDropoutPerturbation:
         assert ctx.get_output("planner__dropped__") == {}
 
     def test_sustained_dropout(self):
-        pert = DropoutPerturbation(
-            mode=DropoutMode.SUSTAINED, start_step=2, duration=3
-        )
+        pert = DropoutPerturbation(mode=DropoutMode.SUSTAINED, start_step=2, duration=3)
         for step in [2, 3, 4]:
             ctx = _make_ctx(timestep=step)
             ctx = pert.apply(ctx, "node")
@@ -142,9 +135,7 @@ class TestDropoutPerturbation:
             DropoutPerturbation(drop_probability=1.5)
 
     def test_node_filtering(self):
-        pert = DropoutPerturbation(
-            node_ids={"planner"}, mode=DropoutMode.SINGLE, drop_step=0
-        )
+        pert = DropoutPerturbation(node_ids={"planner"}, mode=DropoutMode.SINGLE, drop_step=0)
         assert pert.applies_to("planner", 0) is True
         assert pert.applies_to("controller", 0) is False
 
@@ -168,9 +159,7 @@ class TestDropoutPerturbation:
 
 class TestNoisePerturbation:
     def test_noise_modifies_numeric_output(self):
-        pert = NoisePerturbation(
-            distribution=NoiseDistribution.GAUSSIAN, magnitude=0.1, seed=42
-        )
+        pert = NoisePerturbation(distribution=NoiseDistribution.GAUSSIAN, magnitude=0.1, seed=42)
         ctx = _make_ctx()
         ctx.set_output("node", {"value": 1.0, "label": "str"})
         pert.apply(ctx, "node")
@@ -187,9 +176,7 @@ class TestNoisePerturbation:
     def test_gaussian_noise_centered_near_zero(self):
         import numpy as np
 
-        pert = NoisePerturbation(
-            distribution=NoiseDistribution.GAUSSIAN, magnitude=0.01, seed=0
-        )
+        pert = NoisePerturbation(distribution=NoiseDistribution.GAUSSIAN, magnitude=0.01, seed=0)
         deltas = []
         for _ in range(1000):
             ctx = _make_ctx()

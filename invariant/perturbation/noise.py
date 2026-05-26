@@ -54,7 +54,9 @@ class NoisePerturbation(BasePerturbation):
         seed: int | None = None,
     ) -> None:
         self.node_ids = node_ids
-        self.distribution = NoiseDistribution(distribution) if isinstance(distribution, str) else distribution
+        self.distribution = (
+            NoiseDistribution(distribution) if isinstance(distribution, str) else distribution
+        )
         self.magnitude = magnitude
         self.start_step = start_step
         self.end_step = end_step
@@ -70,7 +72,7 @@ class NoisePerturbation(BasePerturbation):
             return False
         return True
 
-    def apply(self, context: "ExecutionContext", node_id: str) -> "ExecutionContext":
+    def apply(self, context: ExecutionContext, node_id: str) -> ExecutionContext:
         outputs = context.get_output(node_id)
         if not outputs:
             return context
@@ -100,9 +102,7 @@ class NoisePerturbation(BasePerturbation):
 
     @property
     def description(self) -> str:
-        return (
-            f"NoisePerturbation({self.distribution.value}, magnitude={self.magnitude:.4f})"
-        )
+        return f"NoisePerturbation({self.distribution.value}, magnitude={self.magnitude:.4f})"
 
     def to_dict(self) -> dict[str, Any]:
         return {

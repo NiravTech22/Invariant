@@ -61,9 +61,7 @@ class StabilityResult:
             "classification": self.classification.value,
             "peak_divergence": self.peak_divergence,
             "recovery_steps": self.recovery_steps,
-            "node_classifications": {
-                k: v.value for k, v in self.node_classifications.items()
-            },
+            "node_classifications": {k: v.value for k, v in self.node_classifications.items()},
             "evidence": self.evidence,
         }
 
@@ -130,15 +128,11 @@ class StabilityAnalyzer:
         else:
             global_cls = StabilityClass.STABLE
 
-        all_divergences = [
-            v for dr in divergence_results.values() for v in dr.divergence_values
-        ]
+        all_divergences = [v for dr in divergence_results.values() for v in dr.divergence_values]
         peak_divergence = float(max(all_divergences)) if all_divergences else 0.0
 
         # Global recovery: maximum recovery_index across nodes, None if any never recovered
-        recovery_indices = [
-            dr.recovery_index for dr in divergence_results.values()
-        ]
+        recovery_indices = [dr.recovery_index for dr in divergence_results.values()]
         if all(ri is not None for ri in recovery_indices):
             recovery_steps: int | None = max(recovery_indices)  # type: ignore[type-var]
         else:
@@ -172,7 +166,7 @@ class StabilityAnalyzer:
         if recovery_index is not None:
             # Look at the post-onset window: is divergence monotonically decreasing?
             if onset_index is not None and recovery_index > onset_index:
-                window = divergences[onset_index:recovery_index + 1]
+                window = divergences[onset_index : recovery_index + 1]
                 if self._is_non_increasing(window, tolerance=1e-6):
                     return StabilityClass.STABLE
             return StabilityClass.MARGINALLY_STABLE

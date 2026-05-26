@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 
@@ -34,13 +35,13 @@ class LatencyBounds(BaseModel):
     """Expected execution latency bounds for a node (milliseconds)."""
 
     min_ms: float = Field(default=0.0, ge=0.0, description="Minimum expected execution time")
-    max_ms: float = Field(default=10.0, ge=0.0, description="Maximum expected execution time (budget)")
+    max_ms: float = Field(
+        default=10.0, ge=0.0, description="Maximum expected execution time (budget)"
+    )
 
     def model_post_init(self, __context: Any) -> None:
         if self.min_ms > self.max_ms:
-            raise ValueError(
-                f"min_ms ({self.min_ms}) must be ≤ max_ms ({self.max_ms})"
-            )
+            raise ValueError(f"min_ms ({self.min_ms}) must be ≤ max_ms ({self.max_ms})")
 
 
 class Node(BaseModel):
@@ -65,7 +66,7 @@ class Node(BaseModel):
     node_id: str = Field(..., min_length=1, description="Unique node identifier")
     node_type: NodeType = Field(default=NodeType.UNKNOWN)
     latency_bounds: LatencyBounds = Field(default_factory=LatencyBounds)
-    exec_fn: Optional[Callable[..., Any]] = Field(
+    exec_fn: Callable[..., Any] | None = Field(
         default=None, exclude=True, description="Execution function; excluded from serialization"
     )
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -84,4 +85,4 @@ class Node(BaseModel):
         """
         if self.exec_fn is None:
             return dict(inputs)
-        return self.exec_fn(inputs)
+        return cast(dict[str, Any], self.exec_fn(inputs))

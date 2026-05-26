@@ -7,8 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from invariant.analysis.divergence import DivergenceAnalyzer
-from invariant.analysis.fault import FaultPropagationAnalyzer
 from invariant.analysis.metrics import TraceMetrics
 from invariant.analysis.stability import StabilityAnalyzer, StabilityResult
 from invariant.core.workflow import Workflow
@@ -125,10 +123,9 @@ class ExperimentResult:
 
 def _build_perturbations(config: ExperimentConfig) -> list[BasePerturbation]:
     """Instantiate perturbation objects from config."""
-    from invariant.perturbation.cascade import CascadePerturbation, CascadeMode
-    from invariant.perturbation.dropout import DropoutPerturbation, DropoutMode
-    from invariant.perturbation.latency import LatencyPerturbation, LatencyMode
-    from invariant.perturbation.noise import NoisePerturbation, NoiseDistribution
+    from invariant.perturbation.dropout import DropoutPerturbation
+    from invariant.perturbation.latency import LatencyPerturbation
+    from invariant.perturbation.noise import NoisePerturbation
     from invariant.perturbation.overload import OverloadPerturbation
 
     registry = {
@@ -143,8 +140,7 @@ def _build_perturbations(config: ExperimentConfig) -> list[BasePerturbation]:
         cls = registry.get(pc.type)
         if cls is None:
             raise ValueError(
-                f"Unknown perturbation type '{pc.type}'. "
-                f"Available: {list(registry.keys())}"
+                f"Unknown perturbation type '{pc.type}'. Available: {list(registry.keys())}"
             )
         node_ids = set(pc.node_ids) if pc.node_ids else None
         params = {**pc.params}
@@ -216,11 +212,11 @@ class ExperimentRunner:
                 initial_time_ms=0.0,
             )
             trace = executor.run(
-                run_id=f"{experiment_id}-run-{i+1:03d}",
+                run_id=f"{experiment_id}-run-{i + 1:03d}",
                 timestep=i,
             )
             perturbed_runs.append(trace)
-            logger.debug(f"Perturbed run {i+1}/{self.config.num_perturbed_runs} complete")
+            logger.debug(f"Perturbed run {i + 1}/{self.config.num_perturbed_runs} complete")
 
         logger.info("All runs complete; running analysis")
 

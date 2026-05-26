@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, cast
 
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -61,7 +61,7 @@ class ExperimentConfig(BaseModel):
         return v
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> "ExperimentConfig":
+    def from_yaml(cls, path: str | Path) -> ExperimentConfig:
         """Load and validate experiment config from a YAML file.
 
         Args:
@@ -82,4 +82,4 @@ class ExperimentConfig(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a plain dict."""
-        return self.model_dump()
+        return cast(dict[str, Any], self.model_dump())

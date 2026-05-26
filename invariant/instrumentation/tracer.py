@@ -62,7 +62,7 @@ class ExecutionTrace:
         ctx: ExecutionContext,
         workflow_name: str,
         perturbation_descriptions: list[str] | None = None,
-    ) -> "ExecutionTrace":
+    ) -> ExecutionTrace:
         """Construct an ExecutionTrace from a completed ExecutionContext.
 
         Args:
@@ -132,7 +132,7 @@ class ExecutionTrace:
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ExecutionTrace":
+    def from_dict(cls, data: dict[str, Any]) -> ExecutionTrace:
         """Reconstruct an ExecutionTrace from a plain dict.
 
         Args:
@@ -151,7 +151,7 @@ class ExecutionTrace:
         )
 
     @classmethod
-    def from_json(cls, json_str: str) -> "ExecutionTrace":
+    def from_json(cls, json_str: str) -> ExecutionTrace:
         """Reconstruct from a JSON string."""
         return cls.from_dict(json.loads(json_str))
 

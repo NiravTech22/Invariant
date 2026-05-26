@@ -6,9 +6,9 @@ import sys
 
 import click
 
-from invariant.cli.run import run
 from invariant.cli.analyze import analyze
 from invariant.cli.report import report
+from invariant.cli.run import run
 
 
 @click.group()

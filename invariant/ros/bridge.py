@@ -1,5 +1,3 @@
-import time
-from typing import List, Dict, Any, Optional
 try:
     import rclpy
     from rclpy.node import Node as RosNode
@@ -10,9 +8,10 @@ except ImportError:
 from ..workflow.graph import WorkflowGraph
 from ..workflow.node import Node, Port, PortType
 
+
 class ActiveBridge:
     """Active ROS 2 introspection bridge."""
-    
+
     def __init__(self, node_name: str = "invariant_introspector"):
         self.active = False
         if rclpy:
@@ -30,34 +29,34 @@ class ActiveBridge:
             return WorkflowGraph()
 
         graph = WorkflowGraph()
-        
+
         # Get all nodes
         node_names_dims = self.node.get_node_names_and_namespaces()
-        
+
         for name, namespace in node_names_dims:
             full_name = f"{namespace}/{name}".replace("//", "/")
-            
+
             # Introspect pubs/subs
             # Note: This API returns list of (topic_name, [types])
             pubs = self.node.get_publisher_names_and_types_by_node(name, namespace)
             subs = self.node.get_subscriber_names_and_types_by_node(name, namespace)
-            
+
             ports = []
-            
+
             for topic, types in subs:
                 ports.append(Port(
                     name=topic,
                     port_type=PortType.INPUT,
                     data_type=types[0] if types else "unknown"
                 ))
-                
+
             for topic, types in pubs:
                 ports.append(Port(
                     name=topic,
                     port_type=PortType.OUTPUT,
                     data_type=types[0] if types else "unknown"
                 ))
-            
+
             # Create Node
             node = Node(
                 id=full_name,
@@ -73,12 +72,12 @@ class ActiveBridge:
             source_node = graph.get_node(source_id)
             for out_port in source_node.output_ports:
                 topic = out_port.name
-                
+
                 # Find targets
                 for target_id in node_ids:
                     if source_id == target_id:
                         continue
-                        
+
                     target_node = graph.get_node(target_id)
                     for in_port in target_node.input_ports:
                         if in_port.name == topic:

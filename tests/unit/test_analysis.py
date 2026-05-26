@@ -18,11 +18,13 @@ from invariant.perturbation.latency import LatencyMode, LatencyPerturbation
 def _make_workflow():
     graph = WorkflowGraph()
     for nid in ["perception", "planner", "controller"]:
-        graph.add_node(Node(
-            node_id=nid,
-            latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
-            exec_fn=lambda inputs: {"val": 1.0},
-        ))
+        graph.add_node(
+            Node(
+                node_id=nid,
+                latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
+                exec_fn=lambda inputs: {"val": 1.0},
+            )
+        )
     graph.add_edge(Edge(source_id="perception", target_id="planner"))
     graph.add_edge(Edge(source_id="planner", target_id="controller"))
     return Workflow(graph=graph, metadata=WorkflowMetadata(name="test"))
@@ -88,9 +90,7 @@ class TestDivergenceAnalyzer:
     def test_perturbation_increases_divergence(self):
         workflow = _make_workflow()
         baseline = _run(workflow, n=1)[0]
-        pert = LatencyPerturbation(
-            node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=100.0
-        )
+        pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=100.0)
         perturbed = _run(workflow, [pert], n=5)
         analyzer = DivergenceAnalyzer(baseline, perturbed)
         results = analyzer.analyze()
@@ -100,9 +100,7 @@ class TestDivergenceAnalyzer:
     def test_onset_index_detected(self):
         workflow = _make_workflow()
         baseline = _run(workflow, n=1)[0]
-        pert = LatencyPerturbation(
-            node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=100.0
-        )
+        pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=100.0)
         perturbed = _run(workflow, [pert], n=5)
         analyzer = DivergenceAnalyzer(baseline, perturbed, threshold=0.05)
         results = analyzer.analyze()
@@ -127,17 +125,11 @@ class TestStabilityAnalyzer:
     def test_large_perturbation_not_stable(self):
         workflow = _make_workflow()
         baseline = _run(workflow, n=1)[0]
-        pert = LatencyPerturbation(
-            node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=500.0
-        )
+        pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=500.0)
         perturbed = _run(workflow, [pert], n=5)
-        analyzer = StabilityAnalyzer(
-            baseline, perturbed, divergence_threshold=0.01
-        )
+        analyzer = StabilityAnalyzer(baseline, perturbed, divergence_threshold=0.01)
         result = analyzer.analyze()
-        assert result.classification in (
-            StabilityClass.MARGINALLY_STABLE, StabilityClass.UNSTABLE
-        )
+        assert result.classification in (StabilityClass.MARGINALLY_STABLE, StabilityClass.UNSTABLE)
 
     def test_result_has_node_classifications(self):
         workflow = _make_workflow()
@@ -165,9 +157,7 @@ class TestFaultPropagationAnalyzer:
     def test_fault_propagates_downstream(self):
         workflow = _make_workflow()
         baseline = _run(workflow, n=1)[0]
-        pert = LatencyPerturbation(
-            node_ids={"perception"}, mode=LatencyMode.FIXED, delay_ms=200.0
-        )
+        pert = LatencyPerturbation(node_ids={"perception"}, mode=LatencyMode.FIXED, delay_ms=200.0)
         perturbed = _run(workflow, [pert], n=5)
         analyzer = FaultPropagationAnalyzer(
             workflow.graph, baseline, perturbed, "perception", divergence_threshold=0.01
@@ -180,9 +170,7 @@ class TestFaultPropagationAnalyzer:
         workflow = _make_workflow()
         baseline = _run(workflow, n=1)[0]
         perturbed = _run(workflow, n=2)
-        analyzer = FaultPropagationAnalyzer(
-            workflow.graph, baseline, perturbed, "perception"
-        )
+        analyzer = FaultPropagationAnalyzer(workflow.graph, baseline, perturbed, "perception")
         result = analyzer.analyze()
         d = result.to_dict()
         assert "source_node_id" in d
@@ -202,9 +190,7 @@ class TestSensitivityAnalyzer:
         def run_at(mag):
             if mag == 0.0:
                 return _run(workflow, n=3)
-            pert = LatencyPerturbation(
-                node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=mag
-            )
+            pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=mag)
             return _run(workflow, [pert], n=3)
 
         analyzer = SensitivityAnalyzer(baseline, magnitudes, run_at)
@@ -219,9 +205,7 @@ class TestSensitivityAnalyzer:
         def run_at(mag):
             if mag == 0.0:
                 return _run(workflow, n=5)
-            pert = LatencyPerturbation(
-                node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=mag
-            )
+            pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=mag)
             return _run(workflow, [pert], n=5)
 
         result = SensitivityAnalyzer(
@@ -229,4 +213,7 @@ class TestSensitivityAnalyzer:
         ).sweep()
         # At 500ms, system should not be stable → threshold should be found
         # (may be 50.0 or 500.0 depending on exact values)
-        assert result.critical_threshold is not None or result.points[0].stability_class == StabilityClass.STABLE
+        assert (
+            result.critical_threshold is not None
+            or result.points[0].stability_class == StabilityClass.STABLE
+        )

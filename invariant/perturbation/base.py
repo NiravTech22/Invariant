@@ -37,7 +37,7 @@ class BasePerturbation(ABC):
         """
 
     @abstractmethod
-    def apply(self, context: "ExecutionContext", node_id: str) -> "ExecutionContext":
+    def apply(self, context: ExecutionContext, node_id: str) -> ExecutionContext:
         """Inject the perturbation effect into the execution context.
 
         Implementations may:

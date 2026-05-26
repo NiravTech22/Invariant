@@ -22,7 +22,7 @@ class ReportGenerator:
     # Markdown
     # ------------------------------------------------------------------
 
-    def markdown(self, result: "ExperimentResult") -> str:
+    def markdown(self, result: ExperimentResult) -> str:
         """Generate a human-readable Markdown report.
 
         Args:
@@ -109,7 +109,7 @@ class ReportGenerator:
     # JSON
     # ------------------------------------------------------------------
 
-    def json(self, result: "ExperimentResult") -> str:  # noqa: A003
+    def json(self, result: ExperimentResult) -> str:  # noqa: A003
         """Generate a full structured JSON report.
 
         Args:
@@ -131,7 +131,7 @@ class ReportGenerator:
     # CSV
     # ------------------------------------------------------------------
 
-    def csv(self, result: "ExperimentResult") -> str:  # noqa: A003
+    def csv(self, result: ExperimentResult) -> str:  # noqa: A003
         """Generate a machine-readable CSV report.
 
         One row per (run_label, node_id): containing timing, health, and
@@ -145,28 +145,24 @@ class ReportGenerator:
         """
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow([
-            "run_label", "node_id", "timestep", "start_ms", "end_ms",
-            "duration_ms", "health", "dropped", "perturbations",
-        ])
+        writer.writerow(
+            [
+                "run_label",
+                "node_id",
+                "timestep",
+                "start_ms",
+                "end_ms",
+                "duration_ms",
+                "health",
+                "dropped",
+                "perturbations",
+            ]
+        )
 
         for record in result.baseline.node_records:
-            writer.writerow([
-                "baseline",
-                record["node_id"],
-                record["timestep"],
-                record["start_ms"],
-                record["end_ms"],
-                record["duration_ms"],
-                record["health"],
-                record["dropped"],
-                "",
-            ])
-
-        for i, trace in enumerate(result.perturbed_runs, start=1):
-            for record in trace.node_records:
-                writer.writerow([
-                    f"run_{i:03d}",
+            writer.writerow(
+                [
+                    "baseline",
                     record["node_id"],
                     record["timestep"],
                     record["start_ms"],
@@ -174,8 +170,25 @@ class ReportGenerator:
                     record["duration_ms"],
                     record["health"],
                     record["dropped"],
-                    "|".join(record.get("perturbations_applied", [])),
-                ])
+                    "",
+                ]
+            )
+
+        for i, trace in enumerate(result.perturbed_runs, start=1):
+            for record in trace.node_records:
+                writer.writerow(
+                    [
+                        f"run_{i:03d}",
+                        record["node_id"],
+                        record["timestep"],
+                        record["start_ms"],
+                        record["end_ms"],
+                        record["duration_ms"],
+                        record["health"],
+                        record["dropped"],
+                        "|".join(record.get("perturbations_applied", [])),
+                    ]
+                )
 
         return buf.getvalue()
 
@@ -183,7 +196,7 @@ class ReportGenerator:
     # LaTeX
     # ------------------------------------------------------------------
 
-    def latex(self, result: "ExperimentResult") -> str:
+    def latex(self, result: ExperimentResult) -> str:
         """Generate a LaTeX table ready for inclusion in a paper.
 
         Produces an IEEE/ACM-style table with columns: perturbation type,
@@ -206,8 +219,10 @@ class ReportGenerator:
         lines.append(r"  \label{tab:invariant-stability}")
         lines.append(r"  \begin{tabular}{llccc}")
         lines.append(r"    \toprule")
-        lines.append(r"    \textbf{Perturbation} & \textbf{Nodes} & "
-                     r"\textbf{Stability} & \textbf{Peak Div.} & \textbf{Recovery} \\")
+        lines.append(
+            r"    \textbf{Perturbation} & \textbf{Nodes} & "
+            r"\textbf{Stability} & \textbf{Peak Div.} & \textbf{Recovery} \\"
+        )
         lines.append(r"    \midrule")
 
         for pc in result.config.perturbations:
@@ -215,9 +230,7 @@ class ReportGenerator:
             stab_str = stab.classification.value.replace("_", " ").title()
             peak_str = f"{stab.peak_divergence:.4f}"
             rec_str = str(stab.recovery_steps) if stab.recovery_steps is not None else "N/A"
-            lines.append(
-                f"    {pc.type} & {nodes_str} & {stab_str} & {peak_str} & {rec_str} \\\\"
-            )
+            lines.append(f"    {pc.type} & {nodes_str} & {stab_str} & {peak_str} & {rec_str} \\\\")
 
         if not result.config.perturbations:
             lines.append(r"    (baseline) & — & Stable & 0.0000 & N/A \\")

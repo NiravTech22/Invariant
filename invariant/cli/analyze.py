@@ -42,13 +42,12 @@ def analyze(
         click.echo(f"[ERROR] Experiment directory not found: {exp_path}", err=True)
         sys.exit(1)
 
-    from invariant.analysis.stability import StabilityAnalyzer
     from invariant.analysis.metrics import TraceMetrics
+    from invariant.analysis.stability import StabilityAnalyzer
     from invariant.experiment.config import ExperimentConfig
     from invariant.experiment.report import ReportGenerator
     from invariant.experiment.runner import ExperimentResult
     from invariant.instrumentation.recorder import ExperimentRecorder
-    from invariant.analysis.stability import StabilityResult, StabilityClass
 
     # Load artifacts from directory
     recorder = ExperimentRecorder(exp_path.parent, exp_path.name)
@@ -80,10 +79,8 @@ def analyze(
     try:
         config = ExperimentConfig(**config_data)
     except Exception:
-        from pydantic import ValidationError
         # Config may be from an older format — create a minimal one
-        from invariant.experiment.config import ExperimentConfig as EC
-        config = EC(
+        config = ExperimentConfig(
             name=config_data.get("name", exp_path.name),
             workflow_path=config_data.get("workflow_path", "unknown"),
         )

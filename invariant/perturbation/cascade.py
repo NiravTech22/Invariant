@@ -56,7 +56,7 @@ class CascadePerturbation(BasePerturbation):
     def applies_to(self, node_id: str, timestep: int) -> bool:
         return any(p.applies_to(node_id, timestep) for p in self._perturbations)
 
-    def apply(self, context: "ExecutionContext", node_id: str) -> "ExecutionContext":
+    def apply(self, context: ExecutionContext, node_id: str) -> ExecutionContext:
         if self.mode == CascadeMode.PARALLEL:
             for pert in self._perturbations:
                 if pert.applies_to(node_id, context.timestep):

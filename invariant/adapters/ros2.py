@@ -12,8 +12,6 @@ a live ROS 2 context are called.
 
 from __future__ import annotations
 
-from typing import Any
-
 try:
     import rclpy
     from rclpy.node import Node as RosNode
@@ -87,9 +85,7 @@ class ROS2Adapter(AbstractAdapter):
 
         graph = WorkflowGraph()
 
-        node_names_namespaces: list[tuple[str, str]] = (
-            self._node.get_node_names_and_namespaces()
-        )
+        node_names_namespaces: list[tuple[str, str]] = self._node.get_node_names_and_namespaces()
 
         for name, namespace in node_names_namespaces:
             full_name = f"{namespace}/{name}".replace("//", "/")

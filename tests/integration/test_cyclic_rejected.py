@@ -1,11 +1,12 @@
 """Integration test: verify cyclic workflows are rejected."""
 
 import pytest
+from pydantic import ValidationError
 
 from invariant.core.edge import Edge
 from invariant.core.graph import WorkflowGraph
 from invariant.core.node import Node
-from invariant.core.workflow import Workflow, WorkflowMetadata
+from invariant.core.workflow import Workflow
 
 
 class TestCyclicWorkflowRejected:
@@ -39,7 +40,7 @@ edges:
             Workflow.from_yaml(p)
 
     def test_self_loop_raises(self):
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             Edge(source_id="a", target_id="a")
 
     def test_valid_dag_passes(self):

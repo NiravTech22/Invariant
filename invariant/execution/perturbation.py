@@ -1,19 +1,21 @@
 import random
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
+
 
 @dataclass
 class PerturbationModel:
     """Declarative perturbation model."""
+
     latency_min_ms: float = 0
     latency_max_ms: float = 0
     jitter_ms: float = 0
     drop_probability: float = 0
-    seed: Optional[int] = None
+    seed: int | None = None
+
 
 class SeededPerturbator:
     """Injects seeded, reproducible perturbations into node execution."""
-    
+
     def __init__(self, model: PerturbationModel):
         self.model = model
         self.rng = random.Random(model.seed)

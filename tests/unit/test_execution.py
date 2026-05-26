@@ -4,14 +4,12 @@ import pytest
 
 from invariant.core.edge import Edge
 from invariant.core.graph import WorkflowGraph
-from invariant.core.node import LatencyBounds, Node, NodeType
+from invariant.core.node import HealthState, LatencyBounds, Node, NodeType
 from invariant.core.workflow import Workflow, WorkflowMetadata
 from invariant.execution.clock import SimulatedClock
-from invariant.execution.context import EdgeRecord, ExecutionContext, NodeRecord
+from invariant.execution.context import ExecutionContext, NodeRecord
 from invariant.execution.executor import DeterministicExecutor
 from invariant.execution.scheduler import TopologicalScheduler
-from invariant.core.node import HealthState
-
 
 # ------------------------------------------------------------------
 # SimulatedClock
@@ -101,8 +99,13 @@ class TestExecutionContext:
     def test_record_node(self):
         ctx = self._make_ctx()
         record = NodeRecord(
-            node_id="n", timestep=0, start_ms=0.0, end_ms=5.0,
-            inputs={}, outputs={}, health=HealthState.HEALTHY,
+            node_id="n",
+            timestep=0,
+            start_ms=0.0,
+            end_ms=5.0,
+            inputs={},
+            outputs={},
+            health=HealthState.HEALTHY,
         )
         ctx.record_node(record)
         assert len(ctx.node_records) == 1
@@ -141,18 +144,22 @@ class TestTopologicalScheduler:
 
 def _simple_workflow():
     graph = WorkflowGraph()
-    graph.add_node(Node(
-        node_id="a",
-        node_type=NodeType.PERCEPTION,
-        latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
-        exec_fn=lambda inputs: {"val": 1.0},
-    ))
-    graph.add_node(Node(
-        node_id="b",
-        node_type=NodeType.PLANNING,
-        latency_bounds=LatencyBounds(min_ms=2.0, max_ms=10.0),
-        exec_fn=lambda inputs: {"val": 2.0},
-    ))
+    graph.add_node(
+        Node(
+            node_id="a",
+            node_type=NodeType.PERCEPTION,
+            latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
+            exec_fn=lambda inputs: {"val": 1.0},
+        )
+    )
+    graph.add_node(
+        Node(
+            node_id="b",
+            node_type=NodeType.PLANNING,
+            latency_bounds=LatencyBounds(min_ms=2.0, max_ms=10.0),
+            exec_fn=lambda inputs: {"val": 2.0},
+        )
+    )
     graph.add_edge(Edge(source_id="a", target_id="b"))
     return Workflow(graph=graph, metadata=WorkflowMetadata(name="test"))
 
@@ -166,7 +173,7 @@ class TestDeterministicExecutor:
 
     def test_determinism_same_seed(self):
         workflow = _simple_workflow()
-        from invariant.perturbation.latency import LatencyPerturbation, LatencyMode
+        from invariant.perturbation.latency import LatencyMode, LatencyPerturbation
 
         # Create two separate instances with the same seed — determinism requires
         # fresh RNGs producing identical sequences, not shared mutable state.
@@ -191,14 +198,18 @@ class TestDeterministicExecutor:
 
     def test_node_outputs_passed_downstream(self):
         graph = WorkflowGraph()
-        graph.add_node(Node(
-            node_id="source",
-            exec_fn=lambda inputs: {"value": 42},
-        ))
-        graph.add_node(Node(
-            node_id="sink",
-            exec_fn=lambda inputs: {"received": inputs.get("source", {}).get("value", 0)},
-        ))
+        graph.add_node(
+            Node(
+                node_id="source",
+                exec_fn=lambda inputs: {"value": 42},
+            )
+        )
+        graph.add_node(
+            Node(
+                node_id="sink",
+                exec_fn=lambda inputs: {"received": inputs.get("source", {}).get("value", 0)},
+            )
+        )
         graph.add_edge(Edge(source_id="source", target_id="sink"))
         workflow = Workflow(graph=graph, metadata=WorkflowMetadata(name="t"))
         executor = DeterministicExecutor(workflow)

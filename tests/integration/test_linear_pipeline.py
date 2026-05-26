@@ -12,7 +12,7 @@ from invariant.analysis.divergence import DivergenceAnalyzer
 from invariant.analysis.fault import FaultPropagationAnalyzer
 from invariant.analysis.stability import StabilityAnalyzer, StabilityClass
 from invariant.execution.executor import DeterministicExecutor
-from invariant.perturbation.cascade import CascadePerturbation, CascadeMode
+from invariant.perturbation.cascade import CascadeMode, CascadePerturbation
 from invariant.perturbation.dropout import DropoutMode, DropoutPerturbation
 from invariant.perturbation.latency import LatencyMode, LatencyPerturbation
 
@@ -61,20 +61,20 @@ class TestLinearPipelineBaseline:
 class TestLinearPipelineLatencyPerturbation:
     def test_latency_divergence_detected(self, linear_workflow):
         baseline = DeterministicExecutor(linear_workflow).run()
-        pert = LatencyPerturbation(
-            node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=50.0
-        )
-        perturbed = [DeterministicExecutor(linear_workflow, [pert]).run(timestep=i) for i in range(5)]
+        pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=50.0)
+        perturbed = [
+            DeterministicExecutor(linear_workflow, [pert]).run(timestep=i) for i in range(5)
+        ]
         analyzer = DivergenceAnalyzer(baseline, perturbed, threshold=0.01)
         results = analyzer.analyze()
         assert results["planner"].peak_divergence > 0.1
 
     def test_stability_classification_after_latency(self, linear_workflow):
         baseline = DeterministicExecutor(linear_workflow).run()
-        pert = LatencyPerturbation(
-            node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=50.0
-        )
-        perturbed = [DeterministicExecutor(linear_workflow, [pert]).run(timestep=i) for i in range(5)]
+        pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=50.0)
+        perturbed = [
+            DeterministicExecutor(linear_workflow, [pert]).run(timestep=i) for i in range(5)
+        ]
         result = StabilityAnalyzer(baseline, perturbed, divergence_threshold=0.05).analyze()
         assert result.classification in (
             StabilityClass.STABLE,
@@ -90,8 +90,7 @@ class TestLinearPipelineCascade:
         drop = DropoutPerturbation(node_ids={"planner"}, mode=DropoutMode.SINGLE, drop_step=0)
         cascade = CascadePerturbation(perturbations=[lat, drop], mode=CascadeMode.PARALLEL)
         perturbed = [
-            DeterministicExecutor(linear_workflow, [cascade]).run(timestep=i)
-            for i in range(5)
+            DeterministicExecutor(linear_workflow, [cascade]).run(timestep=i) for i in range(5)
         ]
         fp_analyzer = FaultPropagationAnalyzer(
             linear_workflow.graph, baseline, perturbed, "perception", divergence_threshold=0.01
@@ -106,9 +105,7 @@ class TestLinearPipelineRecovery:
         baseline_executor = DeterministicExecutor(linear_workflow)
         baseline = baseline_executor.run()
 
-        pert = LatencyPerturbation(
-            node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=100.0
-        )
+        pert = LatencyPerturbation(node_ids={"planner"}, mode=LatencyMode.FIXED, delay_ms=100.0)
         perturbed_traces = []
         # 5 runs with perturbation
         for i in range(5):

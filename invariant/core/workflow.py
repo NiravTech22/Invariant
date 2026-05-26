@@ -61,9 +61,7 @@ class Workflow:
             raise ValueError(f"Workflow '{self.metadata.name}' has no nodes")
         summary = self.graph.summary()
         if not summary["is_dag"]:
-            raise ValueError(
-                f"Workflow '{self.metadata.name}' contains a cycle — invalid DAG"
-            )
+            raise ValueError(f"Workflow '{self.metadata.name}' contains a cycle — invalid DAG")
 
     # ------------------------------------------------------------------
     # Summary
@@ -150,7 +148,7 @@ class Workflow:
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Workflow":
+    def from_dict(cls, data: dict[str, Any]) -> Workflow:
         """Construct a Workflow from a plain dict.
 
         Args:
@@ -204,7 +202,7 @@ class Workflow:
         return cls(graph=graph, metadata=metadata)
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> "Workflow":
+    def from_yaml(cls, path: str | Path) -> Workflow:
         """Load a Workflow from a YAML file.
 
         Args:
@@ -224,7 +222,7 @@ class Workflow:
         return cls.from_dict(data)
 
     @classmethod
-    def from_json(cls, path: str | Path) -> "Workflow":
+    def from_json(cls, path: str | Path) -> Workflow:
         """Load a Workflow from a JSON file.
 
         Args:

@@ -66,7 +66,7 @@ class OverloadPerturbation(BasePerturbation):
             return False
         return True
 
-    def apply(self, context: "ExecutionContext", node_id: str) -> "ExecutionContext":
+    def apply(self, context: ExecutionContext, node_id: str) -> ExecutionContext:
         extra_ms = self._rng.uniform(self.min_overload_ms, self.max_overload_ms)
         context.clock.advance(extra_ms)
         context.log_event(

@@ -158,12 +158,10 @@ class DeterministicExecutor:
                         "node_execution_failed",
                         {"node_id": node_id, "error": str(exc)},
                     )
-                    raise ExecutionError(node_id=node_id, context=ctx, cause=exc)
+                    raise ExecutionError(node_id=node_id, context=ctx, cause=exc) from exc
 
             # Advance clock by nominal execution time (midpoint of bounds)
-            nominal_exec_ms = (
-                node.latency_bounds.min_ms + node.latency_bounds.max_ms
-            ) / 2.0
+            nominal_exec_ms = (node.latency_bounds.min_ms + node.latency_bounds.max_ms) / 2.0
             clock.advance(nominal_exec_ms)
             end_ms = clock.now()
 

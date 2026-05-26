@@ -1,7 +1,5 @@
 """Unit tests for utils, instrumentation/profiler, and experiment/suite."""
 
-import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -27,11 +25,13 @@ from invariant.utils.validation import (
 def _simple_workflow() -> Workflow:
     graph = WorkflowGraph()
     for nid in ["a", "b", "c"]:
-        graph.add_node(Node(
-            node_id=nid,
-            latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
-            exec_fn=lambda inputs: {"val": 1.0},
-        ))
+        graph.add_node(
+            Node(
+                node_id=nid,
+                latency_bounds=LatencyBounds(min_ms=1.0, max_ms=5.0),
+                exec_fn=lambda inputs: {"val": 1.0},
+            )
+        )
     graph.add_edge(Edge(source_id="a", target_id="b"))
     graph.add_edge(Edge(source_id="b", target_id="c"))
     return Workflow(graph=graph, metadata=WorkflowMetadata(name="test"))
@@ -135,6 +135,7 @@ class TestValidationUtils:
 class TestLogging:
     def test_get_logger_returns_logger(self):
         import logging
+
         logger = get_logger("test_module")
         assert isinstance(logger, logging.Logger)
 
@@ -238,9 +239,7 @@ class TestExperimentRecorder:
 # ------------------------------------------------------------------
 
 
-SIMPLE_PIPELINE = str(
-    Path(__file__).parent.parent.parent / "examples" / "simple_pipeline.yaml"
-)
+SIMPLE_PIPELINE = str(Path(__file__).parent.parent.parent / "examples" / "simple_pipeline.yaml")
 
 
 class TestExperimentSuite:
@@ -261,6 +260,7 @@ experiments:
     output_dir: {tmp_path}
 """)
         from invariant.experiment.suite import ExperimentSuite
+
         suite = ExperimentSuite.from_config(suite_yaml)
         assert len(suite.configs) == 2
         assert suite.suite_name == "test_suite"
@@ -277,11 +277,13 @@ experiments:
     output_dir: {tmp_path}
 """)
         from invariant.experiment.suite import ExperimentSuite
+
         suite = ExperimentSuite.from_config(suite_yaml)
         suite_result = suite.run()
         assert len(suite_result.results) == 1
 
     def test_suite_not_found_raises(self):
         from invariant.experiment.suite import ExperimentSuite
+
         with pytest.raises(FileNotFoundError):
             ExperimentSuite.from_config("/nonexistent/suite.yaml")

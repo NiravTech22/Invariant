@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -130,12 +129,10 @@ class ExperimentRecorder:
     def load_runs(self) -> list[ExecutionTrace]:
         """Load all perturbed run traces in order."""
         run_files = sorted(self.exp_dir.glob("run_*.json"))
-        return [
-            ExecutionTrace.from_json(f.read_text(encoding="utf-8")) for f in run_files
-        ]
+        return [ExecutionTrace.from_json(f.read_text(encoding="utf-8")) for f in run_files]
 
     def load_config(self) -> dict[str, Any]:
         """Load experiment configuration from ``config.yaml``."""
         path = self.exp_dir / "config.yaml"
         with open(path, encoding="utf-8") as fh:
-            return yaml.safe_load(fh)
+            return cast(dict[str, Any], yaml.safe_load(fh))

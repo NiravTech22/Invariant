@@ -80,7 +80,7 @@ class LatencyPerturbation(BasePerturbation):
             return False
         return True
 
-    def apply(self, context: "ExecutionContext", node_id: str) -> "ExecutionContext":
+    def apply(self, context: ExecutionContext, node_id: str) -> ExecutionContext:
         delay = self._sample_delay()
         if delay > 0:
             context.clock.advance(delay)

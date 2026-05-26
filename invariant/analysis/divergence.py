@@ -43,7 +43,11 @@ class DivergenceResult:
         self.onset_index: int | None = above[0] if above else None
 
         if self.onset_index is not None:
-            below_after = [i for i in range(self.onset_index, len(divergence_values)) if divergence_values[i] <= threshold]
+            below_after = [
+                i
+                for i in range(self.onset_index, len(divergence_values))
+                if divergence_values[i] <= threshold
+            ]
             self.recovery_index: int | None = below_after[0] if below_after else None
         else:
             self.recovery_index = None

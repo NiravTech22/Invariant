@@ -75,7 +75,7 @@ class ExperimentSuite:
         self.suite_name = suite_name
 
     @classmethod
-    def from_config(cls, path: str | Path) -> "ExperimentSuite":
+    def from_config(cls, path: str | Path) -> ExperimentSuite:
         """Load a suite from a YAML config file.
 
         Args:
@@ -108,9 +108,7 @@ class ExperimentSuite:
         """
         results: list[ExperimentResult] = []
         for i, config in enumerate(self.configs, start=1):
-            logger.info(
-                f"Running experiment {i}/{len(self.configs)}: {config.name}"
-            )
+            logger.info(f"Running experiment {i}/{len(self.configs)}: {config.name}")
             runner = ExperimentRunner(config)
             result = runner.run()
             results.append(result)

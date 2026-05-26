@@ -61,9 +61,7 @@ class SimulatedClock:
             label: Short description of the event.
             extra: Optional extra key-value context.
         """
-        self._events.append(
-            {"time_ms": self._time_ms, "label": label, **(extra or {})}
-        )
+        self._events.append({"time_ms": self._time_ms, "label": label, **(extra or {})})
 
     @property
     def events(self) -> list[dict[str, Any]]:

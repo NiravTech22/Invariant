@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-
-from invariant.core.graph import WorkflowGraph
 from invariant.analysis.divergence import DivergenceAnalyzer
+from invariant.core.graph import WorkflowGraph
 from invariant.instrumentation.tracer import ExecutionTrace
 
 

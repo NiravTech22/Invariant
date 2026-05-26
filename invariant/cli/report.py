@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
 import click
 
 
@@ -17,7 +14,9 @@ import click
     type=click.Choice(["markdown", "json", "csv", "latex"], case_sensitive=False),
     help="Report format to generate",
 )
-@click.option("--output", default=None, help="Output file path (default: <experiment_dir>/report.<fmt>)")
+@click.option(
+    "--output", default=None, help="Output file path (default: <experiment_dir>/report.<fmt>)"
+)
 @click.pass_context
 def report(
     ctx: click.Context,

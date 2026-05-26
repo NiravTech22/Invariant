@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import networkx as nx
 
@@ -60,9 +60,7 @@ class WorkflowGraph:
         if edge.target_id not in self._nodes:
             raise ValueError(f"Target node '{edge.target_id}' not found in graph")
         if self._graph.has_edge(edge.source_id, edge.target_id):
-            raise ValueError(
-                f"Edge '{edge.source_id}' -> '{edge.target_id}' already exists"
-            )
+            raise ValueError(f"Edge '{edge.source_id}' -> '{edge.target_id}' already exists")
 
         self._graph.add_edge(edge.source_id, edge.target_id)
 
@@ -169,7 +167,7 @@ class WorkflowGraph:
         if not self._graph.nodes:
             return 0
         try:
-            return nx.dag_longest_path_length(self._graph)
+            return cast(int, nx.dag_longest_path_length(self._graph))
         except nx.NetworkXError:
             return 0
 
@@ -192,7 +190,4 @@ class WorkflowGraph:
 
     def __repr__(self) -> str:
         s = self.summary()
-        return (
-            f"WorkflowGraph(nodes={s['num_nodes']}, edges={s['num_edges']}, "
-            f"depth={s['depth']})"
-        )
+        return f"WorkflowGraph(nodes={s['num_nodes']}, edges={s['num_edges']}, depth={s['depth']})"

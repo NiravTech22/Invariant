@@ -75,7 +75,7 @@ class DropoutPerturbation(BasePerturbation):
             return False
         return True
 
-    def apply(self, context: "ExecutionContext", node_id: str) -> "ExecutionContext":
+    def apply(self, context: ExecutionContext, node_id: str) -> ExecutionContext:
         timestep = context.timestep
         should_drop = False
 
@@ -101,7 +101,9 @@ class DropoutPerturbation(BasePerturbation):
         if self.mode == DropoutMode.SINGLE:
             return f"DropoutPerturbation(single at step={self.drop_step})"
         if self.mode == DropoutMode.SUSTAINED:
-            return f"DropoutPerturbation(sustained start={self.start_step} for {self.duration} steps)"
+            return (
+                f"DropoutPerturbation(sustained start={self.start_step} for {self.duration} steps)"
+            )
         return f"DropoutPerturbation(probabilistic p={self.drop_probability:.2f})"
 
     def to_dict(self) -> dict[str, Any]:

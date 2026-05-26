@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import random
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from invariant.adapters.base import AbstractAdapter
 from invariant.core.edge import Edge
@@ -237,8 +238,12 @@ class MockAdapter(AbstractAdapter):
 
         graph.add_edge(Edge(source_id=source.node_id, target_id=branch_a.node_id, data_type="mock"))
         graph.add_edge(Edge(source_id=source.node_id, target_id=branch_b.node_id, data_type="mock"))
-        graph.add_edge(Edge(source_id=branch_a.node_id, target_id=arbitrator.node_id, data_type="mock"))
-        graph.add_edge(Edge(source_id=branch_b.node_id, target_id=arbitrator.node_id, data_type="mock"))
+        graph.add_edge(
+            Edge(source_id=branch_a.node_id, target_id=arbitrator.node_id, data_type="mock")
+        )
+        graph.add_edge(
+            Edge(source_id=branch_b.node_id, target_id=arbitrator.node_id, data_type="mock")
+        )
         graph.add_edge(Edge(source_id=arbitrator.node_id, target_id=sink.node_id, data_type="mock"))
 
         metadata = WorkflowMetadata(

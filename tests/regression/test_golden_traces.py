@@ -14,7 +14,12 @@ from pathlib import Path
 
 import pytest
 
-from invariant.adapters.mock import MockAdapter, MockControllerNode, MockPerceptionNode, MockPlannerNode
+from invariant.adapters.mock import (
+    MockAdapter,
+    MockControllerNode,
+    MockPerceptionNode,
+    MockPlannerNode,
+)
 from invariant.execution.executor import DeterministicExecutor
 from invariant.perturbation.latency import LatencyMode, LatencyPerturbation
 
