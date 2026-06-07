@@ -1,9 +1,4 @@
-# Invariant — Project Summary & Development Roadmap
-
-**Author:** Nirav Sawant  
-**Affiliation:** Queen's University, Mechatronics & Robotics Engineering  
-**Status:** Active Development — Hardware Integration Phase  
-**Last Updated:** June 2026
+# Invariant
 
 ---
 
