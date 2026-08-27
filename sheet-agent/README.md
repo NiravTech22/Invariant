@@ -41,7 +41,10 @@ python agent.py --no-stream "list my events tomorrow"
 | `--max-turns N` | Cap on tool-calling turns (default 8) |
 | `--dry-run` | Preview destructive tool calls without executing them |
 | `--no-stream` | Disable token streaming |
-| `--verbose` | Show retry attempts and full diagnostics |
+
+Retry notices and setup errors go to stderr, so piping stdout gives you the
+answer alone. A setup problem (no `credentials.json`, Ollama not running) exits
+with code 2 and a suggested fix rather than a traceback.
 
 ## Tools
 
