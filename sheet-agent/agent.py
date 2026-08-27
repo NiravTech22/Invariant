@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any
+from typing import Any, Iterable
 
-from ollama import Client
+from ollama import Client, Message
 
 from tools.calendar import CALENDAR_FUNCS, CALENDAR_TOOLS
 from tools.excel import EXCEL_FUNCS, EXCEL_TOOLS
@@ -52,6 +52,67 @@ what you are doing as you do it. Read-only tools need no such announcement.
 When you have the answer, reply in plain prose. Be concise and specific."""
 
 
+def _collect_stream(chunks: Iterable[Any]) -> Message:
+    """Consume a streaming chat response, printing content as it arrives.
+
+    Returns a single reassembled Message so the caller cannot tell the
+    difference between a streamed and a non-streamed turn.
+    """
+    parts: list[str] = []
+    tool_calls: list[Any] = []
+    printed = False
+
+    for chunk in chunks:
+        msg = chunk.message
+        if msg.tool_calls:
+            tool_calls.extend(msg.tool_calls)
+        piece = msg.content or ""
+        if piece:
+            parts.append(piece)
+            # Only stream prose. A turn that turns out to be a tool call
+            # prints nothing, so the [tool] line stays the first thing seen.
+            if not tool_calls:
+                print(piece, end="", flush=True)
+                printed = True
+
+    if printed:
+        print()
+
+    return Message(
+        role="assistant",
+        content="".join(parts),
+        tool_calls=tool_calls or None,
+    )
+
+
+def _chat(
+    client: Client, model: str, messages: list[dict[str, Any]], stream: bool
+) -> Message:
+    """One model turn, with retry, streamed or not.
+
+    Retry wraps the whole turn rather than the token iterator: a stream that
+    breaks halfway is restarted from scratch, so partial text is never
+    duplicated into the transcript.
+    """
+    if not stream:
+        response = call_with_retry(
+            client.chat,
+            model=model,
+            messages=messages,
+            tools=ALL_TOOLS,
+            on_retry=_warn_retry,
+        )
+        return response.message
+
+    def _streamed() -> Message:
+        chunks = client.chat(
+            model=model, messages=messages, tools=ALL_TOOLS, stream=True
+        )
+        return _collect_stream(chunks)
+
+    return call_with_retry(_streamed, on_retry=_warn_retry)
+
+
 def _warn_retry(attempt: int, delay: float, exc: BaseException) -> None:
     """Tell the user a transient failure is being retried, on stderr."""
     print(
@@ -94,6 +155,7 @@ def run_agent(
     model: str = DEFAULT_MODEL,
     max_turns: int = MAX_TURNS,
     client: Client | None = None,
+    stream: bool = True,
 ) -> str:
     """Run the tool-calling loop until the model answers or turns run out."""
     client = client or Client(host=DEFAULT_HOST)
@@ -103,14 +165,7 @@ def run_agent(
     ]
 
     for _ in range(max_turns):
-        response = call_with_retry(
-            client.chat,
-            model=model,
-            messages=messages,
-            tools=ALL_TOOLS,
-            on_retry=_warn_retry,
-        )
-        message = response.message
+        message = _chat(client, model, messages, stream=stream)
 
         tool_calls = message.tool_calls or []
         if not tool_calls:
@@ -148,9 +203,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--max-turns", type=int, default=MAX_TURNS, help="Max tool-calling turns."
     )
+    parser.add_argument(
+        "--no-stream",
+        action="store_true",
+        help="Print the answer only when generation finishes, instead of streaming it.",
+    )
     ns = parser.parse_args(argv)
 
-    print(run_agent(ns.instruction, model=ns.model, max_turns=ns.max_turns))
+    stream = not ns.no_stream
+    answer = run_agent(
+        ns.instruction, model=ns.model, max_turns=ns.max_turns, stream=stream
+    )
+    # While streaming the prose has already been printed token by token;
+    # printing the return value again would duplicate it.
+    if not stream and answer:
+        print(answer)
     return 0
 
 

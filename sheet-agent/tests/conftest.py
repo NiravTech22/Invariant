@@ -34,6 +34,26 @@ def tool_response(name: str, arguments: dict[str, Any], content: str = "") -> Ch
     )
 
 
+def stream_text(*pieces: str) -> list[ChatResponse]:
+    """A model turn delivered as several content chunks."""
+    return [
+        ChatResponse(model="fake", message=Message(role="assistant", content=p))
+        for p in pieces
+    ]
+
+
+def _collapse(chunks: list[ChatResponse]) -> ChatResponse:
+    """Merge scripted stream chunks into one response."""
+    content = "".join(c.message.content or "" for c in chunks)
+    calls: list[Any] = []
+    for c in chunks:
+        calls.extend(c.message.tool_calls or [])
+    return ChatResponse(
+        model="fake",
+        message=Message(role="assistant", content=content, tool_calls=calls or None),
+    )
+
+
 def text_response(content: str) -> ChatResponse:
     """A model turn that returns a final plain-prose answer."""
     return ChatResponse(model="fake", message=Message(role="assistant", content=content))
@@ -57,7 +77,15 @@ class FakeOllamaClient:
         item = self.script.pop(0)
         if isinstance(item, Exception):
             raise item
-        return item
+
+        if kwargs.get("stream"):
+            # Real streaming yields an iterator of ChatResponse chunks. A
+            # scripted list is replayed as-is; a single response becomes a
+            # one-chunk stream.
+            chunks = item if isinstance(item, list) else [item]
+            return iter(chunks)
+        # Non-streaming callers get one response; collapse a scripted stream.
+        return _collapse(item) if isinstance(item, list) else item
 
     @property
     def last_messages(self) -> list[dict[str, Any]]:
