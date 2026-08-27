@@ -51,6 +51,19 @@ what you are doing as you do it. Read-only tools need no such announcement.
 When you have the answer, reply in plain prose. Be concise and specific."""
 
 
+def _parse_arguments(raw: Any) -> dict[str, Any]:
+    """Coerce a tool call's arguments to a plain dict.
+
+    ollama 0.6.2 hands back a Mapping, but a JSON string is tolerated so a
+    differently-behaved model build cannot crash the loop.
+    """
+    if raw is None:
+        return {}
+    if isinstance(raw, str):
+        return json.loads(raw) if raw.strip() else {}
+    return dict(raw)
+
+
 def run_tool(name: str, args: dict[str, Any]) -> str:
     """Execute a tool by name and return its result as a JSON string.
 
@@ -87,27 +100,24 @@ def run_agent(
         if not tool_calls:
             return (message.content or "").strip()
 
+        # Normalise arguments once. Most builds hand back a Mapping, but some
+        # emit a JSON string; both must work everywhere below.
+        parsed = [
+            (call.function.name, _parse_arguments(call.function.arguments))
+            for call in tool_calls
+        ]
+
         messages.append(
             {
                 "role": "assistant",
                 "content": message.content or "",
                 "tool_calls": [
-                    {
-                        "function": {
-                            "name": c.function.name,
-                            "arguments": dict(c.function.arguments or {}),
-                        }
-                    }
-                    for c in tool_calls
+                    {"function": {"name": name, "arguments": args}} for name, args in parsed
                 ],
             }
         )
 
-        for call in tool_calls:
-            name = call.function.name
-            raw_args = call.function.arguments or {}
-            args = json.loads(raw_args) if isinstance(raw_args, str) else dict(raw_args)
-
+        for name, args in parsed:
             print(f"[tool] {name}({json.dumps(args, default=str)})")
             result = run_tool(name, args)
             messages.append({"role": "tool", "tool_name": name, "content": result})
