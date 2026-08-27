@@ -30,3 +30,9 @@ htmlcov/
 *.egg-info/
 *.egg
 .eggs/
+
+# sheet-agent OAuth material -- never commit
+sheet-agent/credentials/*
+!sheet-agent/credentials/.gitignore
+credentials.json
+token.json
