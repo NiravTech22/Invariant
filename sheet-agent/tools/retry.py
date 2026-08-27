@@ -31,9 +31,29 @@ def _status_of(exc: BaseException) -> int | None:
     return status if isinstance(status, int) else None
 
 
+def is_connection_failure(exc: BaseException) -> bool:
+    """True when `exc` means 'could not reach the server'.
+
+    Not every library subclasses the builtin ConnectionError. Notably the
+    ollama client maps transport errors to ConnectionError on its blocking
+    path but lets httpx.ConnectError escape when streaming, so matching on
+    the builtin alone silently misses half the cases. Class names across the
+    exception's MRO are checked as well.
+    """
+    if isinstance(exc, (ConnectionError, TimeoutError)):
+        return True
+    names = {cls.__name__ for cls in type(exc).__mro__}
+    if names & {"ConnectError", "ConnectTimeout", "ReadTimeout", "PoolTimeout"}:
+        return True
+    text = str(exc).lower()
+    return "connection refused" in text or "failed to connect" in text
+
+
 def is_transient(exc: BaseException) -> bool:
     """True when `exc` is worth retrying."""
-    if isinstance(exc, (ConnectionError, TimeoutError, OSError)):
+    if is_connection_failure(exc):
+        return True
+    if isinstance(exc, (TimeoutError, OSError)):
         return True
 
     status = _status_of(exc)

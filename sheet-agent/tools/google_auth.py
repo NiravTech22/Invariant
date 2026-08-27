@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import os
 
+from .errors import ConfigurationError
+
 # One combined scope list: re-authorising per-API would force the user through
 # three consent screens and invalidate the previously cached token each time.
 SCOPES = [
@@ -27,6 +29,16 @@ TOKEN_FILE = os.path.join(CREDENTIALS_DIR, "token.json")
 
 def get_credentials():
     """Return valid OAuth credentials, refreshing or prompting as needed."""
+    # Check setup before importing the Google stack: a missing client secret
+    # is reportable without those libraries being installed or importable.
+    if not os.path.exists(TOKEN_FILE) and not os.path.exists(CLIENT_SECRET_FILE):
+        raise ConfigurationError(
+            f"no OAuth client secret at {CLIENT_SECRET_FILE}",
+            "Download the OAuth client secret from the Google Cloud Console "
+            "(with the Sheets, Gmail and Calendar APIs enabled) and save it "
+            "there, then run: python tools/google_auth.py",
+        )
+
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
@@ -42,9 +54,11 @@ def get_credentials():
         creds.refresh(Request())
     else:
         if not os.path.exists(CLIENT_SECRET_FILE):
-            raise FileNotFoundError(
-                f"Missing OAuth client secret at {CLIENT_SECRET_FILE}. "
-                "Download it from the Google Cloud Console and place it there."
+            raise ConfigurationError(
+                f"no OAuth client secret at {CLIENT_SECRET_FILE}",
+                "Download the OAuth client secret from the Google Cloud Console "
+                "(with the Sheets, Gmail and Calendar APIs enabled) and save it "
+                "there, then run: python tools/google_auth.py",
             )
         flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
         creds = flow.run_local_server(port=0)

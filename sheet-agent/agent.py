@@ -5,14 +5,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from ollama import Client, Message
 
 from tools.calendar import CALENDAR_FUNCS, CALENDAR_TOOLS
+from tools.errors import ConfigurationError
 from tools.excel import EXCEL_FUNCS, EXCEL_TOOLS
 from tools.gmail import GMAIL_FUNCS, GMAIL_TOOLS
-from tools.retry import call_with_retry
+from tools.retry import call_with_retry, is_connection_failure
 from tools.sheets import SHEETS_FUNCS, SHEETS_TOOLS
 
 ALL_TOOLS = SHEETS_TOOLS + EXCEL_TOOLS + GMAIL_TOOLS + CALENDAR_TOOLS
@@ -50,6 +51,28 @@ already approved that specific action in their instruction, proceed and say \
 what you are doing as you do it. Read-only tools need no such announcement.
 
 When you have the answer, reply in plain prose. Be concise and specific."""
+
+
+def _guard_connection(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Turn an unreachable Ollama daemon into an actionable setup error.
+
+    Retry has already exhausted its attempts by the time this fires, so the
+    daemon really is down rather than briefly unavailable.
+    """
+
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:
+            if not is_connection_failure(exc):
+                raise
+            raise ConfigurationError(
+                f"cannot reach the Ollama daemon: {exc}",
+                "Start it with `ollama serve`, then confirm the model is "
+                "installed with `ollama list`.",
+            ) from exc
+
+    return wrapper
 
 
 def _collect_stream(chunks: Iterable[Any]) -> Message:
@@ -95,7 +118,7 @@ def _chat(
     duplicated into the transcript.
     """
     if not stream:
-        response = call_with_retry(
+        response = _guard_connection(call_with_retry)(
             client.chat,
             model=model,
             messages=messages,
@@ -110,7 +133,7 @@ def _chat(
         )
         return _collect_stream(chunks)
 
-    return call_with_retry(_streamed, on_retry=_warn_retry)
+    return _guard_connection(call_with_retry)(_streamed, on_retry=_warn_retry)
 
 
 def _warn_retry(attempt: int, delay: float, exc: BaseException) -> None:
@@ -138,14 +161,24 @@ def _parse_arguments(raw: Any) -> dict[str, Any]:
 def run_tool(name: str, args: dict[str, Any]) -> str:
     """Execute a tool by name and return its result as a JSON string.
 
-    Errors are returned to the model rather than raised, so that a single
-    bad call does not abort the whole run.
+    Ordinary failures are returned to the model rather than raised, so a
+    single bad call does not abort the run. `ConfigurationError` is the
+    exception: it means the setup itself is broken, so it propagates to the
+    CLI to be reported to the user.
     """
     func = ALL_FUNCS.get(name)
     if func is None:
         return json.dumps({"error": f"unknown tool: {name}"})
     try:
         return json.dumps(func(**args), default=str)
+    except ConfigurationError:
+        # The environment is broken, not the call. Handing this to the model
+        # would let it "explain around" a problem only the user can fix, so
+        # it propagates to the CLI instead.
+        raise
+    except TypeError as exc:
+        # Wrong/missing arguments from the model: recoverable, tell it so.
+        return json.dumps({"error": f"invalid arguments for {name}: {exc}"})
     except Exception as exc:
         return json.dumps({"error": f"{type(exc).__name__}: {exc}"})
 
@@ -211,9 +244,16 @@ def main(argv: list[str] | None = None) -> int:
     ns = parser.parse_args(argv)
 
     stream = not ns.no_stream
-    answer = run_agent(
-        ns.instruction, model=ns.model, max_turns=ns.max_turns, stream=stream
-    )
+    try:
+        answer = run_agent(
+            ns.instruction, model=ns.model, max_turns=ns.max_turns, stream=stream
+        )
+    except ConfigurationError as exc:
+        # A setup problem is the user's to fix: show the remedy, not a
+        # traceback, and exit with a code that distinguishes it from a
+        # normal failure.
+        print(exc.user_message(), file=sys.stderr)
+        return 2
     # While streaming the prose has already been printed token by token;
     # printing the return value again would duplicate it.
     if not stream and answer:
