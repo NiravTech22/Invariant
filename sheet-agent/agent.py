@@ -158,17 +158,39 @@ def _parse_arguments(raw: Any) -> dict[str, Any]:
     return dict(raw)
 
 
-def run_tool(name: str, args: dict[str, Any]) -> str:
+def run_tool(name: str, args: dict[str, Any], dry_run: bool = False) -> str:
     """Execute a tool by name and return its result as a JSON string.
 
     Ordinary failures are returned to the model rather than raised, so a
     single bad call does not abort the run. `ConfigurationError` is the
     exception: it means the setup itself is broken, so it propagates to the
     CLI to be reported to the user.
+
+    With `dry_run`, destructive tools are previewed instead of executed.
+    Read-only tools still run, so the model can gather the data it needs to
+    describe what the destructive call would do.
     """
     func = ALL_FUNCS.get(name)
     if func is None:
         return json.dumps({"error": f"unknown tool: {name}"})
+
+    if dry_run and name in DESTRUCTIVE_TOOLS:
+        # Intercept before execution, and tell the model plainly that
+        # nothing happened so it does not report the action as done.
+        print(f"[dry-run] would call {name}({json.dumps(args, default=str)})")
+        return json.dumps(
+            {
+                "dry_run": True,
+                "would_execute": name,
+                "arguments": args,
+                "note": (
+                    "DRY RUN: this action was NOT performed. Tell the user what "
+                    "would have happened; do not claim it was done."
+                ),
+            },
+            default=str,
+        )
+
     try:
         return json.dumps(func(**args), default=str)
     except ConfigurationError:
@@ -189,11 +211,20 @@ def run_agent(
     max_turns: int = MAX_TURNS,
     client: Client | None = None,
     stream: bool = True,
+    dry_run: bool = False,
 ) -> str:
     """Run the tool-calling loop until the model answers or turns run out."""
     client = client or Client(host=DEFAULT_HOST)
+    system_prompt = SYSTEM_PROMPT
+    if dry_run:
+        # Added to, never replacing, the standing confirmation rule above.
+        system_prompt += (
+            "\n\nDRY RUN MODE: destructive tools will not actually run. "
+            "Describe what would happen; never claim an action was completed."
+        )
+
     messages: list[dict[str, Any]] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": instruction},
     ]
 
@@ -222,8 +253,11 @@ def run_agent(
         )
 
         for name, args in parsed:
-            print(f"[tool] {name}({json.dumps(args, default=str)})")
-            result = run_tool(name, args)
+            # Under dry run a destructive call prints its own [dry-run] line;
+            # a [tool] line here would read as though it had executed.
+            if not (dry_run and name in DESTRUCTIVE_TOOLS):
+                print(f"[tool] {name}({json.dumps(args, default=str)})")
+            result = run_tool(name, args, dry_run=dry_run)
             messages.append({"role": "tool", "tool_name": name, "content": result})
 
     return "[agent] stopped: reached the maximum number of tool-calling turns."
@@ -237,6 +271,11 @@ def main(argv: list[str] | None = None) -> int:
         "--max-turns", type=int, default=MAX_TURNS, help="Max tool-calling turns."
     )
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview destructive tool calls without executing them.",
+    )
+    parser.add_argument(
         "--no-stream",
         action="store_true",
         help="Print the answer only when generation finishes, instead of streaming it.",
@@ -244,9 +283,15 @@ def main(argv: list[str] | None = None) -> int:
     ns = parser.parse_args(argv)
 
     stream = not ns.no_stream
+    if ns.dry_run:
+        print("[dry-run] destructive tools will be previewed, not executed.")
     try:
         answer = run_agent(
-            ns.instruction, model=ns.model, max_turns=ns.max_turns, stream=stream
+            ns.instruction,
+            model=ns.model,
+            max_turns=ns.max_turns,
+            stream=stream,
+            dry_run=ns.dry_run,
         )
     except ConfigurationError as exc:
         # A setup problem is the user's to fix: show the remedy, not a
