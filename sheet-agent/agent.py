@@ -12,6 +12,7 @@ from ollama import Client
 from tools.calendar import CALENDAR_FUNCS, CALENDAR_TOOLS
 from tools.excel import EXCEL_FUNCS, EXCEL_TOOLS
 from tools.gmail import GMAIL_FUNCS, GMAIL_TOOLS
+from tools.retry import call_with_retry
 from tools.sheets import SHEETS_FUNCS, SHEETS_TOOLS
 
 ALL_TOOLS = SHEETS_TOOLS + EXCEL_TOOLS + GMAIL_TOOLS + CALENDAR_TOOLS
@@ -49,6 +50,15 @@ already approved that specific action in their instruction, proceed and say \
 what you are doing as you do it. Read-only tools need no such announcement.
 
 When you have the answer, reply in plain prose. Be concise and specific."""
+
+
+def _warn_retry(attempt: int, delay: float, exc: BaseException) -> None:
+    """Tell the user a transient failure is being retried, on stderr."""
+    print(
+        f"[retry] attempt {attempt} failed ({type(exc).__name__}); "
+        f"retrying in {delay:.0f}s",
+        file=sys.stderr,
+    )
 
 
 def _parse_arguments(raw: Any) -> dict[str, Any]:
@@ -93,7 +103,13 @@ def run_agent(
     ]
 
     for _ in range(max_turns):
-        response = client.chat(model=model, messages=messages, tools=ALL_TOOLS)
+        response = call_with_retry(
+            client.chat,
+            model=model,
+            messages=messages,
+            tools=ALL_TOOLS,
+            on_retry=_warn_retry,
+        )
         message = response.message
 
         tool_calls = message.tool_calls or []

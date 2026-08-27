@@ -56,10 +56,17 @@ def get_credentials():
 
 
 def get_service(api: str, version: str):
-    """Build a Google API client for `api` using the shared credentials."""
+    """Build a Google API client for `api` using the shared credentials.
+
+    The discovery-document fetch is a network call, so it gets the same
+    backoff treatment as everything else.
+    """
     from googleapiclient.discovery import build
 
-    return build(api, version, credentials=get_credentials(), cache_discovery=False)
+    from .retry import call_with_retry
+
+    creds = get_credentials()
+    return call_with_retry(build, api, version, credentials=creds, cache_discovery=False)
 
 
 if __name__ == "__main__":
